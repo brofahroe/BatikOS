@@ -1,0 +1,302 @@
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+        <ul class="nav nav-tabs" id="produksiTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-semibold text-dark" id="wo-tab" data-bs-toggle="tab" data-bs-target="#wo" type="button" role="tab">Daftar Work Order</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold text-dark" id="laporan-tab" data-bs-toggle="tab" data-bs-target="#laporan" type="button" role="tab">Laporan Progres</button>
+            </li>
+            <li class="nav-item d-none" role="presentation" id="tabApprovalContainer">
+                <button class="nav-link fw-semibold text-warning" id="approval-tab" data-bs-toggle="tab" data-bs-target="#approval" type="button" role="tab"><i class="bi bi-shield-check me-1"></i> Persetujuan Edit <span class="badge bg-danger ms-1 d-none" id="badgeApproval">0</span></button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="card-body p-4">
+        <div class="tab-content">
+            <!-- TAB: DAFTAR WO -->
+            <div class="tab-pane fade show active" id="wo" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Daftar Work Order (WO)</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalWO"><i class="bi bi-file-earmark-plus me-1"></i> Buat WO Baru</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="tableWO">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nomor WO</th>
+                                <th>Tanggal</th>
+                                <th>Target Selesai</th>
+                                <th>Produk / Pesanan</th>
+                                <th>Jumlah</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="7" class="text-center py-4 text-muted">Memuat data WO...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: LAPORAN PROGRES -->
+            <div class="tab-pane fade" id="laporan" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Riwayat Progres Produksi</h5>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalLaporan"><i class="bi bi-journal-plus me-1"></i> Tambah Progres</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="tableLaporan">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Nomor WO</th>
+                                <th>Tahapan</th>
+                                <th>Jumlah Selesai</th>
+                                <th>Pelapor</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="5" class="text-center py-4 text-muted">Memuat data Laporan...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: PERSETUJUAN (Khusus Owner) -->
+            <div class="tab-pane fade" id="approval" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Persetujuan Perubahan Work Order</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="fetchApprovals()"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="tableApproval">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tgl Pengajuan</th>
+                                <th>Nomor WO</th>
+                                <th>Diajukan Oleh</th>
+                                <th>Rincian Perubahan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody><tr><td colspan="6" class="text-center py-4 text-muted">Memuat data persetujuan...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: FORM WO -->
+<div class="modal fade" id="modalWO" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">Form Work Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formWO" onsubmit="event.preventDefault(); saveWorkOrder(event);">
+          <div class="row g-4">
+              <!-- Kolom Kiri: Header WO & Detail Produk -->
+              <div class="col-md-5 border-end">
+                  <h6 class="text-primary mb-3"><i class="bi bi-info-circle me-1"></i> Informasi Dasar</h6>
+                  <div class="mb-3">
+                    <label class="form-label">Nomor WO</label>
+                    <input type="text" class="form-control" id="wo_nomor" required placeholder="Contoh: WO-2026-001">
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Tanggal Mulai</label>
+                        <input type="date" class="form-control" id="wo_tanggal" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Target Selesai</label>
+                        <input type="date" class="form-control" id="wo_target" required>
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                      <div class="col-6">
+                          <label class="form-label">Status Produksi</label>
+                          <select class="form-select" id="wo_status" required>
+                              <option value="Draft">Draft (Belum Mulai)</option>
+                              <option value="Berjalan">Berjalan (Potong Stok Bahan)</option>
+                          </select>
+                      </div>
+                      <div class="col-6">
+                          <label class="form-label">Jenis Pesanan</label>
+                          <select class="form-select" id="wo_jenis" required onchange="togglePelangganWO()">
+                              <option value="Stok Internal">Stok Internal</option>
+                              <option value="Pesanan Pelanggan">Pesanan Pelanggan</option>
+                          </select>
+                      </div>
+                  </div>
+                  <div class="mb-3 d-none" id="wo_pelanggan_container">
+                      <label class="form-label">Pemilik Pesanan (Pelanggan)</label>
+                      <select class="form-select" id="wo_pelanggan">
+                          <option value="">Pilih Pelanggan...</option>
+                          <!-- Diisi via JS -->
+                      </select>
+                  </div>
+                  <hr>
+                  <h6 class="text-primary mb-3"><i class="bi bi-box-seam me-1"></i> Detail Pesanan</h6>
+                  <div class="mb-3">
+                    <label class="form-label">Nama Produk / Custom</label>
+                    <input type="text" class="form-control" id="wo_produk_nama" required placeholder="Contoh: Kemeja Batik Lengan Pendek">
+                  </div>
+                  <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Ukuran (Opsional)</label>
+                        <input type="text" class="form-control" id="wo_produk_ukuran" placeholder="Contoh: XL">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Jumlah Produksi</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="wo_produk_jumlah" required min="1">
+                            <span class="input-group-text">Pcs</span>
+                        </div>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Keterangan Tambahan</label>
+                    <textarea class="form-control" id="wo_produk_ket" rows="2" placeholder="Catatan khusus..."></textarea>
+                  </div>
+              </div>
+              
+              <!-- Kolom Kanan: Kebutuhan Bahan (BoM) -->
+              <div class="col-md-7">
+                  <h6 class="text-primary mb-3"><i class="bi bi-basket me-1"></i> Kebutuhan Bahan (BoM)</h6>
+                  <div class="card bg-light border-0 mb-3">
+                      <div class="card-body p-3">
+                          <div class="row g-2">
+                              <div class="col-md-6">
+                                  <label class="form-label small">Pilih Bahan Baku</label>
+                                  <select class="form-select form-select-sm" id="bom_bahan">
+                                      <option value="">Pilih Bahan...</option>
+                                      <!-- Diisi via JS -->
+                                  </select>
+                              </div>
+                              <div class="col-md-4">
+                                  <label class="form-label small">Jumlah Dibutuhkan</label>
+                                  <div class="input-group input-group-sm">
+                                      <input type="number" class="form-control" id="bom_qty" min="0.1" step="0.01">
+                                      <span class="input-group-text" id="bom_satuan">Satuan</span>
+                                  </div>
+                              </div>
+                              <div class="col-md-2 d-flex align-items-end">
+                                  <button type="button" class="btn btn-sm btn-secondary w-100" onclick="addBomItem()">Tambah</button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                  
+                  <div class="table-responsive">
+                      <table class="table table-sm table-bordered align-middle" id="tableBomItems">
+                          <thead class="table-light">
+                              <tr>
+                                  <th>Bahan Baku</th>
+                                  <th class="text-center">Kebutuhan</th>
+                                  <th class="text-center">Stok Saat Ini</th>
+                                  <th>Aksi</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                              <!-- Item dimasukkan via JS -->
+                              <tr id="emptyBomRow"><td colspan="4" class="text-center text-muted small py-3">Belum ada bahan yang ditambahkan</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+                  <div class="alert alert-warning py-2 small mt-2 mb-0 d-none" id="bomWarning">
+                      <i class="bi bi-exclamation-triangle-fill me-1"></i> Peringatan: Ada bahan baku yang stoknya tidak mencukupi (Out of Stock)! Anda tetap bisa membuat WO ini, tapi harap segera lakukan *Restock*.
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer border-top-0 px-0 pb-0 mt-3">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary px-4">Simpan Work Order</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: LAPORAN PROGRES -->
+<div class="modal fade" id="modalLaporan" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">Lapor Progres Produksi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formLaporan" onsubmit="event.preventDefault(); saveLaporanProduksi(event);">
+          <div class="mb-3">
+            <label class="form-label">Work Order</label>
+            <select class="form-select" id="lap_wo" required>
+                <option value="">Pilih WO yang Berjalan...</option>
+                <!-- Diisi via JS -->
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tahapan Produksi</label>
+            <select class="form-select" id="lap_tahap" required>
+                <option value="">Pilih Tahap...</option>
+                <option value="Pemotongan Kain">Pemotongan Kain</option>
+                <option value="Gambar Pola">Gambar Pola</option>
+                <option value="Pencantingan">Pencantingan</option>
+                <option value="QC Cantingan">QC Cantingan</option>
+                <option value="Pewarnaan">Pewarnaan</option>
+                <option value="QC Pewarnaan">QC Pewarnaan</option>
+                <option value="Penguncian Warna">Penguncian Warna</option>
+                <option value="Pelorodan">Pelorodan</option>
+                <option value="Finishing">Finishing</option>
+            </select>
+          </div>
+          <div class="row mb-3">
+              <div class="col-6">
+                  <label class="form-label">Tanggal Pelaporan</label>
+                  <input type="date" class="form-control" id="lap_tanggal" required>
+              </div>
+              <div class="col-6">
+                  <label class="form-label">Jumlah Selesai</label>
+                  <div class="input-group">
+                      <input type="number" class="form-control" id="lap_jumlah" required min="1">
+                      <span class="input-group-text">Pcs</span>
+                  </div>
+              </div>
+          </div>
+          <div class="mb-3">
+              <label class="form-label">Nama Pelapor / Pekerja</label>
+              <!-- Container ini akan dirender secara dinamis oleh JS berdasarkan Role -->
+              <div id="containerPelapor">
+                  <input type="text" class="form-control" id="lap_pelapor" required placeholder="Memuat...">
+              </div>
+          </div>
+          <div class="modal-footer border-top-0 px-0 pb-0 mt-4">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary w-100">Simpan Progres</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DETAIL WO -->
+<div class="modal fade" id="modalDetailWO" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title">Rincian Work Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-2" id="detailWOContent">
+        <div class="text-center py-5 text-muted">Memuat rincian...</div>
+      </div>
+      <div class="modal-footer border-top-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>

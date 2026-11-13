@@ -1,0 +1,655 @@
+<script>
+var dataWO = [];
+var dataLaporan = [];
+var dataApproval = [];
+var currentBomItems = [];
+var dataPelanggan = [];
+var dataStaf = [];
+var editWOID = null;
+
+async function loadProduksi() {
+    checkApprovalRole();
+    setupPelaporInput();
+    const modalLaporan = document.getElementById('modalLaporan');
+    if (modalLaporan) {
+        modalLaporan.addEventListener('show.bs.modal', function () {
+            document.getElementById('lap_tanggal').valueAsDate = new Date();
+        });
+    }
+    await fetchWO();
+    await fetchLaporan();
+    await fetchPelanggan();
+    await fetchApprovals();
+    populateBahanBakuSelect();
+    populateWOSelect();
+}
+
+// -----------------------------------------
+// DATA FETCHING
+// -----------------------------------------
+async function fetchWO() {
+    try {
+        const res = await requestAPI('read', { sheet: 'WorkOrder' });
+        if (res.success) {
+            dataWO = res.data;
+            renderWO();
+            populateWOSelect();
+        }
+    } catch(err) { console.error("Gagal memuat WO", err); }
+}
+
+async function fetchLaporan() {
+    try {
+        const res = await requestAPI('read', { sheet: 'LaporanProduksi' });
+        if (res.success) {
+            dataLaporan = res.data;
+            renderLaporan();
+            renderWO(); // Re-render WO to show actual status
+        }
+    } catch(err) { console.error("Gagal memuat Laporan", err); }
+}
+
+// -----------------------------------------
+// RENDER UI
+// -----------------------------------------
+function renderWO() {
+    const tbody = document.querySelector("#tableWO tbody");
+    tbody.innerHTML = "";
+    if(dataWO.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='7' class='text-center py-4 text-muted'>Belum ada data Work Order.</td></tr>";
+        return;
+    }
+    
+    const woRev = [...dataWO].reverse();
+    woRev.forEach(wo => {
+        let statusBadge = "bg-secondary";
+        if(wo.Status === "Berjalan") statusBadge = "bg-primary";
+        else if(wo.Status === "Selesai") statusBadge = "bg-success";
+        else if(wo.Status === "Batal") statusBadge = "bg-danger";
+
+        // Cari laporan progress terakhir untuk WO ini
+        const laporanWO = dataLaporan.filter(l => l.ID_WO === wo.ID);
+        let statusAktualHtml = '';
+        if (laporanWO.length > 0) {
+            // Ambil data laporan paling bawah/terakhir dari array (karena berurutan)
+            const latestLap = laporanWO[laporanWO.length - 1];
+            statusAktualHtml = `<div class="mt-1" style="font-size: 0.8rem;"><span class="text-muted"><i class="bi bi-arrow-return-right me-1"></i>Progres:</span> <b>${latestLap.Tahap}</b> (${latestLap.JumlahSelesai} Pcs)</div>`;
+        }
+
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td><span class="fw-bold">${wo.NomorWO}</span><br><small class="text-muted">${wo.JenisPesanan || 'Stok Internal'}</small></td>
+            <td>${wo.Tanggal ? new Date(wo.Tanggal).toLocaleDateString('id-ID') : '-'}</td>
+            <td>${wo.TargetSelesai ? new Date(wo.TargetSelesai).toLocaleDateString('id-ID') : '-'}</td>
+            <td><button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="viewWODetails('${wo.ID}')">Lihat Detail <i class="bi bi-box-arrow-up-right ms-1"></i></button></td>
+            <td>-</td> 
+            <td>
+                <span class="badge ${statusBadge}">${wo.Status}</span>
+                ${statusAktualHtml}
+            </td>
+            <td>
+                ${(wo.Status !== "Selesai" && wo.Status !== "Batal") ? `
+                    <button class="btn btn-sm btn-outline-primary" onclick="editWO('${wo.ID}')"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteData('WorkOrder', '${wo.ID}')"><i class="bi bi-trash"></i></button>
+                ` : `<i class="bi bi-lock-fill text-muted"></i>`}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function renderLaporan() {
+    const tbody = document.querySelector("#tableLaporan tbody");
+    tbody.innerHTML = "";
+    if(dataLaporan.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5' class='text-center py-4 text-muted'>Belum ada laporan produksi.</td></tr>";
+        return;
+    }
+    
+    const lapRev = [...dataLaporan].reverse();
+    lapRev.forEach(lap => {
+        const wo = dataWO.find(w => w.ID === lap.ID_WO);
+        const noWO = wo ? wo.NomorWO : lap.ID_WO;
+        
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${lap.Tanggal ? new Date(lap.Tanggal).toLocaleDateString('id-ID') : '-'}</td>
+            <td><span class="fw-bold">${noWO}</span></td>
+            <td><span class="badge bg-light text-dark border">${lap.Tahap}</span></td>
+            <td><span class="fw-semibold text-primary">${lap.JumlahSelesai} Pcs</span></td>
+            <td><i class="bi bi-person me-1 text-muted"></i> ${lap.Pelapor}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function populateWOSelect() {
+    const sel = document.getElementById('lap_wo');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">Pilih WO yang Berjalan...</option>';
+    dataWO.filter(w => w.Status === "Berjalan").forEach(wo => {
+        sel.innerHTML += `<option value="${wo.ID}">${wo.NomorWO}</option>`;
+    });
+}
+
+function populateBahanBakuSelect() {
+    const sel = document.getElementById('bom_bahan');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">Pilih Bahan Baku...</option>';
+    dataBahanBaku.forEach(bb => {
+        sel.innerHTML += `<option value="${bb.ID}">${bb.Kode} - ${bb.Nama} (Stok: ${bb.StokSaatIni} ${bb["Satuan Pakai"]})</option>`;
+    });
+}
+
+// -----------------------------------------
+// BOM (Bill of Materials) LOGIC
+// -----------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    const bomBahan = document.getElementById('bom_bahan');
+    if (bomBahan) {
+        bomBahan.addEventListener('change', function(e) {
+            const bb = dataBahanBaku.find(x => x.ID === e.target.value);
+            document.getElementById('bom_satuan').innerText = bb ? bb["Satuan Pakai"] : "Satuan";
+        });
+    }
+});
+
+function addBomItem() {
+    const bbId = document.getElementById('bom_bahan').value;
+    const qty = parseFloat(document.getElementById('bom_qty').value);
+    
+    if(!bbId || !qty || qty <= 0) return alert("Pilih bahan baku dan masukkan jumlah yang valid.");
+    
+    const bb = dataBahanBaku.find(x => x.ID === bbId);
+    if(!bb) return;
+    
+    const exists = currentBomItems.find(x => x.IDBahan === bbId);
+    if(exists) {
+        exists.JumlahDibutuhkan += qty;
+    } else {
+        currentBomItems.push({
+            IDBahan: bbId,
+            JumlahDibutuhkan: qty,
+            _bbName: bb.Nama,
+            _satuan: bb["Satuan Pakai"],
+            _stok: parseFloat(bb.StokSaatIni) || 0
+        });
+    }
+    
+    document.getElementById('bom_bahan').value = '';
+    document.getElementById('bom_qty').value = '';
+    document.getElementById('bom_satuan').innerText = 'Satuan';
+    renderBomItems();
+}
+
+function removeBomItem(id) {
+    currentBomItems = currentBomItems.filter(x => x.IDBahan !== id);
+    renderBomItems();
+}
+
+function renderBomItems() {
+    const tbody = document.querySelector("#tableBomItems tbody");
+    const warning = document.getElementById("bomWarning");
+    tbody.innerHTML = "";
+    
+    if(currentBomItems.length === 0) {
+        tbody.innerHTML = '<tr id="emptyBomRow"><td colspan="4" class="text-center text-muted small py-3">Belum ada bahan yang ditambahkan</td></tr>';
+        warning.classList.add('d-none');
+        return;
+    }
+    
+    let hasOutOfStock = false;
+    
+    currentBomItems.forEach(item => {
+        const isOutOfStock = item.JumlahDibutuhkan > item._stok;
+        if(isOutOfStock) hasOutOfStock = true;
+        
+        const rowClass = isOutOfStock ? "table-danger text-danger" : "";
+        const badgeStok = isOutOfStock ? `<span class="badge bg-danger ms-2">Stok Habis!</span>` : "";
+        
+        let tr = document.createElement("tr");
+        tr.className = rowClass;
+        tr.innerHTML = `
+            <td>${item._bbName}</td>
+            <td class="text-center" style="width: 150px;">
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control text-center fw-bold" value="${item.JumlahDibutuhkan}" onchange="updateBomQty('${item.IDBahan}', this.value)" min="0.1" step="0.01">
+                    <span class="input-group-text">${item._satuan}</span>
+                </div>
+            </td>
+            <td class="text-center align-middle">${item._stok} ${item._satuan} ${badgeStok}</td>
+            <td class="text-center align-middle">
+                <button type="button" class="btn btn-sm btn-outline-danger p-1" onclick="removeBomItem('${item.IDBahan}')"><i class="bi bi-x"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    if(hasOutOfStock) warning.classList.remove('d-none');
+    else warning.classList.add('d-none');
+}
+
+function updateBomQty(id, newVal) {
+    const qty = parseFloat(newVal);
+    if(qty && qty > 0) {
+        const item = currentBomItems.find(x => x.IDBahan === id);
+        if(item) item.JumlahDibutuhkan = qty;
+    }
+    renderBomItems();
+}
+
+// -----------------------------------------
+// SAVE & SUBMIT LOGIC
+// -----------------------------------------
+async function saveWorkOrder(event) {
+    if(currentBomItems.length === 0) {
+        if(!await window.confirmAsync("Anda tidak menambahkan bahan baku (BoM). Yakin ingin membuat WO tanpa bahan baku?")) return;
+    }
+    
+    const user = JSON.parse(getStorage('batikseng_user') || '{}');
+    const payload = {
+        username: user.username,
+        userRole: user.role,
+        wo: {
+            NomorWO: document.getElementById('wo_nomor').value,
+            Tanggal: document.getElementById('wo_tanggal').value,
+            TargetSelesai: document.getElementById('wo_target').value,
+            Status: document.getElementById('wo_status').value,
+            JenisPesanan: document.getElementById('wo_jenis').value,
+            IDPelanggan: document.getElementById('wo_jenis').value === 'Pesanan Pelanggan' ? document.getElementById('wo_pelanggan').value : '',
+            PIC_Produksi: user.username || "Admin"
+        },
+        details: [{
+            NamaCustom: document.getElementById('wo_produk_nama').value,
+            UkuranCustom: document.getElementById('wo_produk_ukuran').value,
+            JumlahProduksi: parseInt(document.getElementById('wo_produk_jumlah').value),
+            Keterangan: document.getElementById('wo_produk_ket').value
+        }],
+        bom: currentBomItems.map(item => ({ IDBahan: item.IDBahan, JumlahDibutuhkan: item.JumlahDibutuhkan }))
+    };
+    
+    if (editWOID) {
+        payload.wo.ID = editWOID;
+    }
+    
+    const btn = event.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menyimpan...';
+    btn.disabled = true;
+
+    try {
+        let res;
+        if(editWOID) {
+            payload.wo.ID = editWOID;
+            res = await requestAPI('updateWO', payload);
+        } else {
+            res = await requestAPI('createWO', payload);
+        }
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        
+        if(res.success) {
+            if(res.message && res.message.includes('persetujuan')) {
+                alert(res.message);
+                fetchApprovals();
+            }
+            
+            document.getElementById('formWO').reset();
+            const cont = document.getElementById('wo_pelanggan_container');
+            if(cont) cont.classList.add('d-none');
+            
+            currentBomItems = [];
+            editWOID = null;
+            document.querySelector('#modalWO .modal-title').innerText = "Form Work Order";
+            renderBomItems();
+            bootstrap.Modal.getInstance(document.getElementById('modalWO')).hide();
+            await fetchWO();
+        } else { alert(res.message); }
+    } catch(e) { 
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        alert("Error: " + e.message); 
+    }
+}
+
+async function saveLaporanProduksi(event) {
+    const payload = {
+        ID_WO: document.getElementById('lap_wo').value,
+        Tahap: document.getElementById('lap_tahap').value,
+        Tanggal: document.getElementById('lap_tanggal').value,
+        JumlahSelesai: document.getElementById('lap_jumlah').value,
+        Pelapor: document.getElementById('lap_pelapor').value
+    };
+    
+    const btn = event.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menyimpan...';
+    btn.disabled = true;
+
+    try {
+        const res = await requestAPI('createLaporanProduksi', payload);
+        if(res.success) {
+            document.getElementById('formLaporan').reset();
+            bootstrap.Modal.getInstance(document.getElementById('modalLaporan')).hide();
+            await fetchLaporan();
+        } else { alert(res.message); }
+    } catch(e) { alert("Error: " + e.message); }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+}
+
+// Fitur tambahan: Lihat Detail WO
+async function viewWODetails(woId) {
+    const wo = dataWO.find(x => x.ID === woId);
+    if(!wo) return;
+    
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDetailWO')).show();
+    document.getElementById('detailWOContent').innerHTML = '<div class="text-center py-5 text-muted"><span class="spinner-border spinner-border-sm me-2"></span> Memuat rincian...</div>';
+    
+    try {
+        const res = await requestAPI('readWODetails', { woId: woId });
+        if(res.success) {
+            let html = `
+                <div class="row mb-4">
+                    <div class="col-sm-6">
+                        <h6 class="text-muted mb-1">Nomor WO</h6>
+                        <div class="fw-bold fs-5">${wo.NomorWO}</div>
+                    </div>
+                    <div class="col-sm-6 text-sm-end mt-3 mt-sm-0">
+                        <h6 class="text-muted mb-1">Status</h6>
+                        <span class="badge ${wo.Status === 'Berjalan' ? 'bg-primary' : (wo.Status === 'Selesai' ? 'bg-success' : 'bg-secondary')}">${wo.Status}</span>
+                    </div>
+                </div>
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <small class="text-muted d-block">Tanggal Mulai</small>
+                                <span class="fw-semibold">${wo.Tanggal ? new Date(wo.Tanggal).toLocaleDateString('id-ID') : '-'}</span>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <small class="text-muted d-block">Target Selesai</small>
+                                <span class="fw-semibold">${wo.TargetSelesai ? new Date(wo.TargetSelesai).toLocaleDateString('id-ID') : '-'}</span>
+                            </div>
+            `;
+            
+            if(res.data.details && res.data.details.length > 0) {
+                const det = res.data.details[0];
+                html += `
+                            <div class="col-12 mb-3">
+                                <small class="text-muted d-block">Produk / Pesanan</small>
+                                <span class="fw-bold text-dark">${det.NamaCustom || '-'} ${det.UkuranCustom ? '(Ukuran: ' + det.UkuranCustom + ')' : ''}</span>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <small class="text-muted d-block">Jumlah Produksi</small>
+                                <span class="fw-semibold text-primary">${det.JumlahProduksi || 0} Pcs</span>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block">Keterangan</small>
+                                <span>${det.Keterangan || '-'}</span>
+                            </div>
+                `;
+            }
+            html += `</div></div></div>`;
+            
+            html += `<h6 class="text-primary mb-3"><i class="bi bi-basket me-1"></i> Kebutuhan Bahan (BOM)</h6>
+                     <div class="table-responsive"><table class="table table-sm table-bordered">
+                     <thead class="table-light"><tr><th>Bahan Baku</th><th class="text-center">Kebutuhan</th></tr></thead><tbody>`;
+            
+            if(res.data.bom && res.data.bom.length > 0) {
+                res.data.bom.forEach(b => {
+                    const bb = dataBahanBaku.find(x => x.ID === b.IDBahan);
+                    const nama = bb ? bb.Nama : "Unknown";
+                    const satuan = bb ? bb["Satuan Pakai"] : "";
+                    html += `<tr><td>${nama}</td><td class="text-center fw-semibold">${b.JumlahDibutuhkan} ${satuan}</td></tr>`;
+                });
+            } else {
+                html += `<tr><td colspan="2" class="text-center text-muted">Tidak ada bahan baku.</td></tr>`;
+            }
+            html += `</tbody></table></div>`;
+            
+            document.getElementById('detailWOContent').innerHTML = html;
+        } else {
+            document.getElementById('detailWOContent').innerHTML = `<div class="alert alert-danger">${res.message}</div>`;
+        }
+    } catch(e) {
+        document.getElementById('detailWOContent').innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+    }
+}
+
+async function editWO(id) {
+    const wo = dataWO.find(x => x.ID === id);
+    if(!wo) return;
+    
+    editWOID = id;
+    
+    document.querySelector('#modalWO .modal-title').innerText = "Edit Work Order";
+    const btn = document.querySelector('#modalWO .btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memuat...';
+    btn.disabled = true;
+    
+    try {
+        const res = await requestAPI('readWODetails', { woId: id });
+        if(res.success) {
+            if(res.data.details && res.data.details.length > 0) {
+                const det = res.data.details[0];
+                document.getElementById('wo_produk_nama').value = det.NamaCustom || '';
+                document.getElementById('wo_produk_ukuran').value = det.UkuranCustom || '';
+                document.getElementById('wo_produk_jumlah').value = det.JumlahProduksi || '';
+                document.getElementById('wo_produk_ket').value = det.Keterangan || '';
+            }
+            currentBomItems = [];
+            if(res.data.bom) {
+                res.data.bom.forEach(b => {
+                    const bb = dataBahanBaku.find(x => x.ID === b.IDBahan);
+                    if(bb) {
+                        currentBomItems.push({
+                            IDBahan: b.IDBahan,
+                            JumlahDibutuhkan: b.JumlahDibutuhkan,
+                            _bbName: bb.Nama,
+                            _satuan: bb["Satuan Pakai"],
+                            _stok: parseFloat(bb.StokSaatIni) || 0
+                        });
+                    }
+                });
+            }
+            renderBomItems();
+            
+            document.getElementById('wo_nomor').value = wo.NomorWO || "";
+            document.getElementById('wo_tanggal').value = wo.Tanggal ? wo.Tanggal.split('T')[0] : "";
+            document.getElementById('wo_target').value = wo.TargetSelesai ? wo.TargetSelesai.split('T')[0] : "";
+            
+            // JIKA STATUS SUDAH BERJALAN ATAU SELESAI, TAMPILKAN PERINGATAN APPROVAL UNTUK STAF
+            const wB = document.getElementById('bomWarning');
+            if(wo.Status === "Berjalan") {
+                const user = JSON.parse(getStorage('batikseng_user') || '{}');
+                if(user.role !== "Pemilik (Owner)") {
+                    wB.innerHTML = `<i class="bi bi-info-circle-fill me-1"></i> Perubahan pada WO yang sedang Berjalan akan diajukan sebagai <b>Persetujuan (Approval)</b> kepada Owner.`;
+                    wB.className = "alert alert-info py-2 small mt-2 mb-0";
+                } else {
+                    wB.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> Anda mengedit WO yang Berjalan. Mutasi stok lama akan direvert dan disesuaikan ulang otomatis.`;
+                    wB.className = "alert alert-warning py-2 small mt-2 mb-0";
+                }
+            } else {
+                wB.className = "alert alert-warning py-2 small mt-2 mb-0 d-none";
+            }
+            
+            document.getElementById('wo_status').value = wo.Status || "Draft";
+            document.getElementById('wo_jenis').value = wo.JenisPesanan || "Stok Internal";
+            
+            togglePelangganWO();
+            if(wo.JenisPesanan === "Pesanan Pelanggan" && wo.IDPelanggan) {
+                document.getElementById('wo_pelanggan').value = wo.IDPelanggan;
+            }
+            
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modalWO')).show();
+        }
+    } catch(e) { console.error(e); }
+    
+    btn.innerHTML = 'Simpan Work Order';
+    btn.disabled = false;
+}
+
+// -----------------------------------------
+// PELANGGAN & APPROVAL LOGIC
+// -----------------------------------------
+async function fetchPelanggan() {
+    try {
+        const res = await requestAPI('read', { sheet: 'Pelanggan' });
+        if (res.success) {
+            dataPelanggan = res.data;
+            const sel = document.getElementById('wo_pelanggan');
+            sel.innerHTML = '<option value="">Pilih Pelanggan...</option>';
+            dataPelanggan.forEach(p => {
+                let opt = document.createElement('option');
+                opt.value = p.ID;
+                opt.text = p.Nama || p['Nama Instansi'] || 'Tanpa Nama';
+                sel.appendChild(opt);
+            });
+        }
+    } catch(err) { console.error(err); }
+}
+
+function togglePelangganWO() {
+    const val = document.getElementById('wo_jenis').value;
+    const cont = document.getElementById('wo_pelanggan_container');
+    const sel = document.getElementById('wo_pelanggan');
+    if(val === 'Pesanan Pelanggan') {
+        cont.classList.remove('d-none');
+        sel.required = true;
+    } else {
+        cont.classList.add('d-none');
+        sel.required = false;
+        sel.value = "";
+    }
+}
+
+function checkApprovalRole() {
+    const user = JSON.parse(getStorage('batikseng_user') || '{}');
+    if(user.role === "Pemilik (Owner)") {
+        const tab = document.getElementById('tabApprovalContainer');
+        if(tab) tab.classList.remove('d-none');
+    }
+}
+
+async function fetchApprovals() {
+    const user = JSON.parse(getStorage('batikseng_user') || '{}');
+    if(user.role !== "Pemilik (Owner)") return;
+    try {
+        const res = await requestAPI('readApprovals');
+        if (res.success) {
+            dataApproval = res.data;
+            renderApprovals();
+        }
+    } catch(err) { console.error(err); }
+}
+
+function renderApprovals() {
+    const tbody = document.querySelector("#tableApproval tbody");
+    const badge = document.getElementById("badgeApproval");
+    tbody.innerHTML = "";
+    
+    let pendingCount = 0;
+    
+    if(dataApproval.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='6' class='text-center py-4 text-muted'>Belum ada request persetujuan.</td></tr>";
+        badge.classList.add('d-none');
+        return;
+    }
+    
+    const appRev = [...dataApproval].reverse();
+    appRev.forEach(a => {
+        let statusBadge = "bg-warning text-dark";
+        if(a.StatusApproval === "Disetujui") statusBadge = "bg-success";
+        else if(a.StatusApproval === "Ditolak") statusBadge = "bg-danger";
+        
+        if(a.StatusApproval === "Pending") pendingCount++;
+
+        let payload = {};
+        try { payload = JSON.parse(a.DataBaruJSON || '{}'); } catch(e){}
+        const noWo = payload.wo ? payload.wo.NomorWO : '-';
+
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${a.TanggalPengajuan ? new Date(a.TanggalPengajuan).toLocaleString('id-ID') : '-'}</td>
+            <td><span class="fw-bold">${noWo}</span></td>
+            <td>${a.DiajukanOleh}</td>
+            <td><button class="btn btn-sm btn-link p-0 text-decoration-none" onclick="viewDetailApproval('${a.ID}')">Lihat Rincian</button></td>
+            <td><span class="badge ${statusBadge}">${a.StatusApproval}</span></td>
+            <td>
+                ${a.StatusApproval === "Pending" ? `
+                    <button class="btn btn-sm btn-success py-0 px-2" onclick="prosesApproval('${a.ID}', 'approveWOEdit')"><i class="bi bi-check"></i> Setujui</button>
+                    <button class="btn btn-sm btn-danger py-0 px-2" onclick="prosesApproval('${a.ID}', 'rejectWOEdit')"><i class="bi bi-x"></i> Tolak</button>
+                ` : `<span class="text-muted small"><i class="bi bi-check-all"></i> Selesai</span>`}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+    
+    if(pendingCount > 0) {
+        badge.innerText = pendingCount;
+        badge.classList.remove('d-none');
+    } else {
+        badge.classList.add('d-none');
+    }
+}
+
+function viewDetailApproval(id) {
+    const a = dataApproval.find(x => x.ID === id);
+    if(!a) return;
+    alert("Data JSON Perubahan (Nantinya bisa ditampilkan lebih rapi):\\n\\n" + a.DataBaruJSON);
+}
+
+async function prosesApproval(id, actionCode) {
+    if(!await window.confirmAsync(actionCode === 'approveWOEdit' ? "Yakin ingin MENYETUJUI perubahan ini?" : "Yakin ingin MENOLAK perubahan ini?")) return;
+    try {
+        const res = await requestAPI(actionCode, { id: id });
+        if(res.success) {
+            await fetchApprovals();
+            await fetchWO();
+        } else {
+            alert(res.message);
+        }
+    } catch(err) { console.error(err); }
+}
+
+// -----------------------------------------
+// PELAPOR LOGIC
+// -----------------------------------------
+async function setupPelaporInput() {
+    const user = JSON.parse(getStorage('batikseng_user') || '{}');
+    const container = document.getElementById('containerPelapor');
+    if(!container) return;
+    
+    if(user.role === 'Staf Produksi') {
+        container.innerHTML = `<input type="text" class="form-control" id="lap_pelapor" value="${user.username}" readonly>`;
+    } else {
+        container.innerHTML = `
+            <input type="text" class="form-control" id="lap_pelapor" list="listStaf" placeholder="Pilih atau ketik nama...">
+            <datalist id="listStaf"></datalist>
+        `;
+        try {
+            const res = await requestAPI('read', { sheet: 'Pengguna' });
+            if(res.success) {
+                const list = document.getElementById('listStaf');
+                res.data.filter(u => u.Peran === 'Staf Produksi').forEach(u => {
+                    let opt = document.createElement('option');
+                    opt.value = u.NamaPengguna;
+                    list.appendChild(opt);
+                });
+            }
+        } catch(err) {}
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if(getStorage('batikseng_token')) {
+            loadProduksi();
+        }
+    }, 600); // Tunggu loadInventaris selesai
+});
+</script>

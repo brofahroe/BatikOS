@@ -1,0 +1,383 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  OWNER
+  CASHIER
+  PRODUCTION
+  INVENTORY
+}
+
+enum POStatus {
+  DRAFT
+  ORDERED
+  RECEIVED
+  CANCELLED
+}
+
+enum WOStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  HOLD
+}
+
+enum SOStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum MutationType {
+  IN
+  OUT
+  ADJUSTMENT
+}
+
+enum CashFlowType {
+  IN
+  OUT
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REVISION
+  REJECTED
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  QRIS
+}
+
+model User {
+  id           String        @id @default(cuid())
+  username     String        @unique
+  passwordHash String
+  fullName     String
+  role         Role          @default(ADMIN)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  purchaseOrders PurchaseOrder[]
+  workOrders     WorkOrder[]
+  salesOrders    SalesOrder[]
+  activityLogs   ActivityLog[]
+}
+
+model Customer {
+  id              String       @id @default(cuid())
+  name            String
+  agency          String?
+  address         String?
+  whatsapp        String?
+  email           String?
+  city            String?
+  category        String?
+  totalSpend      Float        @default(0)
+  lastOrderDate   DateTime?
+  status          String       @default("Aktif")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  salesOrders     SalesOrder[]
+}
+
+model Supplier {
+  id              String          @id @default(cuid())
+  name            String
+  picName         String?
+  address         String?
+  whatsapp        String?
+  email           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  rawMaterials    RawMaterial[]
+  purchaseOrders  PurchaseOrder[]
+}
+
+model RawMaterial {
+  id              String                @id @default(cuid())
+  code            String                @unique
+  name            String
+  category        String
+  buyUnit         String
+  useUnit         String
+  conversionRatio Float                 @default(1.0)
+  buyPrice        Float                 @default(0)
+  sellPrice       Float                 @default(0)
+  minStock        Float                 @default(0)
+  currentStock    Float                 @default(0)
+  supplierId      String?
+  supplier        Supplier?             @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  bomRecipes      ProductRecipeBOM[]
+  poDetails       PurchaseOrderDetail[]
+  mutations       MaterialMutation[]
+}
+
+model Product {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  name        String
+  category    String
+  motif       String?
+  color       String?
+  size        String?
+  hpp         Float               @default(0)
+  sellPrice   Float               @default(0)
+  stock       Float               @default(0)
+  photoUrl    String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  bomRecipes  ProductRecipeBOM[]
+  workOrders  WorkOrder[]
+  soDetails   SalesOrderDetail[]
+}
+
+model ProductRecipeBOM {
+  id             String      @id @default(cuid())
+  productId      String
+  product        Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  rawMaterialId  String
+  rawMaterial    RawMaterial @relation(fields: [rawMaterialId], references: [id], onDelete: Cascade)
+  quantityNeeded Float
+
+  @@unique([productId, rawMaterialId])
+}
+
+model PurchaseOrder {
+  id          String                @id @default(cuid())
+  poNumber    String                @unique
+  supplierId  String
+  supplier    Supplier              @relation(fields: [supplierId], references: [id])
+  date        DateTime              @default(now())
+  totalAmount Float                 @default(0)
+  status      POStatus              @default(DRAFT)
+  createdById String?
+  createdBy   User?                 @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  notes       String?
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  details     PurchaseOrderDetail[]
+}
+
+model PurchaseOrderDetail {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  rawMaterialId   String
+  rawMaterial     RawMaterial   @relation(fields: [rawMaterialId], references: [id])
+  quantity        Float
+  price           Float
+  subtotal        Float
+}
+
+model MaterialMutation {
+  id            String       @id @default(cuid())
+  date          DateTime     @default(now())
+  rawMaterialId String
+  rawMaterial   RawMaterial  @relation(fields: [rawMaterialId], references: [id], onDelete: Cascade)
+  changeQty     Float
+  type          MutationType
+  referenceId   String?
+  note          String?
+  createdAt     DateTime     @default(now())
+}
+
+model WorkOrder {
+  id           String              @id @default(cuid())
+  woNumber     String              @unique
+  productId    String
+  product      Product             @relation(fields: [productId], references: [id])
+  targetQty    Float
+  completedQty Float               @default(0)
+  startDate    DateTime            @default(now())
+  deadline     DateTime?
+  status       WOStatus            @default(PLANNED)
+  notes        String?
+  managedById  String?
+  managedBy    User?               @relation(fields: [managedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  stages           WorkOrderDetail[]
+  reports          ProductionReport[]
+  approvalRequests ApprovalRequest[]
+}
+
+model WorkOrderDetail {
+  id          String     @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  stageName   String
+  status      String     @default("PENDING")
+  startedAt   DateTime?
+  completedAt DateTime?
+  picName     String?
+  notes       String?
+}
+
+model ProductionReport {
+  id           String    @id @default(cuid())
+  workOrderId  String
+  workOrder    WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  date         DateTime  @default(now())
+  stage        String
+  goodQty      Float     @default(0)
+  defectQty    Float     @default(0)
+  operatorName String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+}
+
+model ApprovalRequest {
+  id          String         @id @default(cuid())
+  type        String
+  referenceId String?
+  workOrderId String?
+  workOrder   WorkOrder?     @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  requestedBy String
+  status      ApprovalStatus @default(PENDING)
+  comment     String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model SalesOrder {
+  id            String             @id @default(cuid())
+  soNumber      String             @unique
+  date          DateTime           @default(now())
+  customerId    String?
+  customer      Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  handledById   String?
+  handledBy     User?              @relation(fields: [handledById], references: [id], onDelete: SetNull)
+  totalAmount   Float
+  discount      Float              @default(0)
+  tax           Float              @default(0)
+  netAmount     Float
+  paidAmount    Float
+  changeAmount  Float              @default(0)
+  paymentMethod PaymentMethod      @default(CASH)
+  status        SOStatus           @default(COMPLETED)
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  details       SalesOrderDetail[]
+  invoices      Invoice[]
+  cashFlows     CashFlow[]
+}
+
+model SalesOrderDetail {
+  id           String     @id @default(cuid())
+  salesOrderId String
+  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product    @relation(fields: [productId], references: [id])
+  quantity     Float
+  price        Float
+  subtotal     Float
+}
+
+model Invoice {
+  id            String     @id @default(cuid())
+  invoiceNumber String     @unique
+  salesOrderId  String
+  salesOrder    SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+  date          DateTime   @default(now())
+  dueDate       DateTime?
+  total         Float
+  status        String     @default("LUNAS")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  payments      Payment[]
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  date          DateTime @default(now())
+  method        String
+  amount        Float
+  receiptUrl    String?
+  createdAt     DateTime @default(now())
+}
+
+model CashFlow {
+  id           String       @id @default(cuid())
+  date         DateTime     @default(now())
+  type         CashFlowType
+  category     String
+  amount       Float
+  referenceId  String?
+  salesOrderId String?
+  salesOrder   SalesOrder?  @relation(fields: [salesOrderId], references: [id], onDelete: SetNull)
+  description  String?
+  createdAt    DateTime     @default(now())
+}
+
+model BatikDesign {
+  id           String           @id @default(cuid())
+  code         String           @unique
+  title        String
+  motifName    String
+  category     String
+  baseImageUrl String?
+  mockup3DUrl  String?
+  description  String?
+  status       String           @default("Draft")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  approvals    PublicApproval[]
+}
+
+model PublicApproval {
+  id            String         @id @default(uuid())
+  designId      String
+  design        BatikDesign    @relation(fields: [designId], references: [id], onDelete: Cascade)
+  customerName  String?
+  customerPhone String?
+  status        ApprovalStatus @default(PENDING)
+  feedback      String?
+  approvedAt    DateTime?
+  createdAt     DateTime       @default(now())
+}
+
+model Setting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  timestamp   DateTime @default(now())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      String
+  module      String
+  description String
+}
+

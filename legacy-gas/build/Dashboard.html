@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batik Seng - Dasbor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <?!= include('Style'); ?>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="d-flex">
+            <!-- Sidebar Backdrop -->
+            <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+            <!-- Sidebar -->
+            <div class="sidebar p-3 d-flex flex-column d-none" id="sidebarLayout" style="width: 260px; transition: margin-left 0.3s ease, left 0.3s ease;">
+                <div class="text-center py-4 mb-3 border-bottom" style="border-color: rgba(255,255,255,0.1) !important;">
+                    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjmkZdE0UivXyFZWeCZroZGpkVvPioSLteJywmDhldowDuUNHfPAgcq0Ih_dNtkyAjH4Uk2ODjzLDheoDP7Ii2wsW6MR2GB4D6mGLd50NcfXjnzyLAtXWwVLLIv1tl6eaW_VxeMXhfrH5fIqV6b_lEeYEelj8ILi3ywvdwSbnw5r5xmHz6UMzsb5iEXXe6w/s1600/Batik%20Seng-01.png" alt="BatikOS Logo" style="height: 40px; margin-bottom: 12px; filter: brightness(0) invert(1);">
+                    <h4 class="fw-bold mb-0 text-white" style="letter-spacing: 1px;">Batik Seng</h4>
+                </div>
+                <ul class="nav nav-pills flex-column mb-auto">
+                    <li id="nav-dasbor" class="nav-item">
+                        <a href="#" class="nav-link active" data-page="dasbor"><i class="bi bi-speedometer2 me-2"></i> Dasbor Utama</a>
+                    </li>
+                    <li id="nav-inventaris">
+                        <a href="#" class="nav-link" data-page="inventaris"><i class="bi bi-box-seam me-2"></i> Inventaris</a>
+                    </li>
+                    <li id="nav-produksi">
+                        <a href="#" class="nav-link" data-page="produksi"><i class="bi bi-tools me-2"></i> Produksi & WO</a>
+                    </li>
+                    <li id="nav-penjualan">
+                        <a href="#" class="nav-link" data-page="penjualan"><i class="bi bi-cart3 me-2"></i> Penjualan & Kasir</a>
+                    </li>
+                    <li id="nav-pelanggan">
+                        <a href="#" class="nav-link" data-page="pelanggan"><i class="bi bi-person-lines-fill me-2"></i> Pelanggan</a>
+                    </li>
+                    <li id="nav-keuangan">
+                        <a href="#" class="nav-link" data-page="keuangan"><i class="bi bi-cash-coin me-2"></i> Keuangan</a>
+                    </li>
+                    <li id="nav-visualizer" style="display: none;">
+                        <a href="#" class="nav-link" data-page="visualizer"><i class="bi bi-palette me-2"></i> Visualizer</a>
+                    </li>
+                    <li id="nav-pengaturan" style="display: none;">
+                        <a href="#" class="nav-link" data-page="pengaturan"><i class="bi bi-gear me-2"></i> Pengaturan</a>
+                    </li>
+                    <li id="nav-pengguna" style="display: none;">
+                        <a href="#" class="nav-link" data-page="pengguna"><i class="bi bi-people me-2"></i> Users</a>
+                    </li>
+                </ul>
+                <hr>
+                <div class="dropdown">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle fs-4 me-2"></i>
+                        <strong id="displayUsername">Memuat...</strong>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark shadow" aria-labelledby="userMenu">
+                        <li><a class="dropdown-item" href="#" id="btnLogout">Keluar Sistem</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Area Konten Utama -->
+            <div class="flex-grow-1 bg-light">
+                <nav class="navbar navbar-expand-lg px-4 py-3 sticky-top desktop-navbar d-none">
+                    <div class="container-fluid">
+                        <div class="d-flex align-items-center">
+                            <button class="btn btn-light me-3 border-0 bg-transparent shadow-none p-0 pe-2" id="btnToggleSidebar">
+                                <i class="bi bi-list fs-3 text-dark"></i>
+                            </button>
+                            <span class="navbar-brand mb-0 fs-4 fw-bold text-dark" id="pageTitle">Dasbor Utama</span>
+                        </div>
+                        
+                        <div class="ms-auto d-flex align-items-center">
+                            <div class="dropdown" id="notifDropdownDesktop">
+                                <a href="#" class="d-flex align-items-center text-dark text-decoration-none position-relative" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-bell fs-4"></i>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notifBadgeDesktop" style="font-size: 0.6rem;">0</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow" style="width: 350px; max-height: 400px; overflow-y: auto;" id="notifListDesktop">
+                                    <li><h6 class="dropdown-header">Notifikasi Progres Produksi</h6></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><span class="dropdown-item text-muted text-center py-3">Tidak ada notifikasi baru</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <nav class="mobile-header d-none">
+                    <div class="d-flex align-items-center">
+                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjmkZdE0UivXyFZWeCZroZGpkVvPioSLteJywmDhldowDuUNHfPAgcq0Ih_dNtkyAjH4Uk2ODjzLDheoDP7Ii2wsW6MR2GB4D6mGLd50NcfXjnzyLAtXWwVLLIv1tl6eaW_VxeMXhfrH5fIqV6b_lEeYEelj8ILi3ywvdwSbnw5r5xmHz6UMzsb5iEXXe6w/s1600/Batik%20Seng-01.png" alt="BatikOS Logo" style="height: 30px; margin-right: 10px; border-radius:4px;">
+                        <span class="mb-0 fs-5 fw-bold text-dark" id="mobilePageTitle">Dasbor Utama</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="dropdown me-3" id="notifDropdownMobile">
+                            <a href="#" class="d-flex align-items-center text-dark text-decoration-none position-relative" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-bell fs-4"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notifBadgeMobile" style="font-size: 0.6rem;">0</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" style="width: 300px; max-height: 400px; overflow-y: auto;" id="notifListMobile">
+                                <li><h6 class="dropdown-header">Notifikasi Progres Produksi</h6></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><span class="dropdown-item text-muted text-center py-3">Tidak ada notifikasi baru</span></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="mobileUserMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle fs-4"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="mobileUserMenu">
+                                <li><a class="dropdown-item" href="#" id="btnMobileLogout">Keluar Sistem</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="p-4" id="mainContent">
+                    <div id="view-login" class="page-view active">
+                        <style>
+                            .hero-bg {
+                                background: url('https://images.unsplash.com/photo-1557683316-973673baf926?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+                            }
+                            .hero-overlay {
+                                background: linear-gradient(135deg, rgba(139, 46, 37, 0.85) 0%, rgba(81, 24, 16, 0.95) 100%);
+                            }
+                            .login-card {
+                                border-radius: 1rem;
+                                border: 1px solid rgba(0,0,0,0.05);
+                                background: #ffffff;
+                            }
+                            .form-control:focus {
+                                box-shadow: 0 0 0 0.25rem rgba(184, 68, 44, 0.15);
+                                border-color: #e28e7e;
+                            }
+                            .tracking-wider {
+                                letter-spacing: 0.05em;
+                            }
+                        </style>
+                        <div class="row g-0 vh-100" style="margin: -1.5rem;">
+                            <!-- Hero Section -->
+                            <div class="col-lg-6 d-none d-lg-block position-relative hero-bg">
+                                <div class="position-absolute top-0 start-0 w-100 h-100 hero-overlay"></div>
+                                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-start p-5 text-white" style="padding-left: 10% !important; padding-right: 10% !important;">
+                                    <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjmkZdE0UivXyFZWeCZroZGpkVvPioSLteJywmDhldowDuUNHfPAgcq0Ih_dNtkyAjH4Uk2ODjzLDheoDP7Ii2wsW6MR2GB4D6mGLd50NcfXjnzyLAtXWwVLLIv1tl6eaW_VxeMXhfrH5fIqV6b_lEeYEelj8ILi3ywvdwSbnw5r5xmHz6UMzsb5iEXXe6w/s1600/Batik%20Seng-01.png" alt="BatikOS Logo" style="height: 50px; filter: brightness(0) invert(1);" class="mb-5">
+                                    <h1 class="display-4 fw-bold mb-4" style="line-height: 1.2;">Kelola Bisnis Anda dengan Lebih Cerdas</h1>
+                                    <p class="fs-5 mb-5" style="color: rgba(255, 255, 255, 0.8);">Batik Seng mengintegrasikan inventaris, keuangan, dan produksi dalam satu platform Enterprise Resource Planning yang tangguh dan mudah digunakan.</p>
+                                </div>
+                            </div>
+                            <!-- Login Form Section -->
+                            <div class="col-lg-6 d-flex align-items-center justify-content-center">
+                                <div style="width: 100%; max-width: 440px; padding: 2rem;">
+                                    <div class="text-center mb-5 d-lg-none">
+                                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjmkZdE0UivXyFZWeCZroZGpkVvPioSLteJywmDhldowDuUNHfPAgcq0Ih_dNtkyAjH4Uk2ODjzLDheoDP7Ii2wsW6MR2GB4D6mGLd50NcfXjnzyLAtXWwVLLIv1tl6eaW_VxeMXhfrH5fIqV6b_lEeYEelj8ILi3ywvdwSbnw5r5xmHz6UMzsb5iEXXe6w/s1600/Batik%20Seng-01.png" alt="BatikOS Logo" style="height: 50px; margin-bottom: 15px;">
+                                        <h3 class="fw-bold text-primary mb-0">Batik Seng</h3>
+                                    </div>
+                                    <div class="mb-4 d-none d-lg-block text-center">
+                                        <h2 class="fw-bold mb-2">Selamat Datang Kembali</h2>
+                                        <p class="text-muted">Masukkan kredensial Anda untuk mengakses sistem</p>
+                                    </div>
+                                    <div class="card login-card shadow p-4 p-md-5">
+                                        <form id="loginForm">
+                                            <div class="form-floating mb-4">
+                                                <input type="text" class="form-control" id="username" placeholder="Nama Pengguna" required>
+                                                <label for="username" class="text-muted">Nama Pengguna</label>
+                                            </div>
+                                            <div class="form-floating mb-4">
+                                                <input type="password" class="form-control" id="password" placeholder="Kata Sandi" required>
+                                                <label for="password" class="text-muted">Kata Sandi</label>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold text-uppercase tracking-wider" id="btnLogin">
+                                                <span id="loginText">Masuk</span>
+                                                <span id="loginSpinner" class="spinner-border spinner-border-sm d-none ms-2" role="status" aria-hidden="true"></span>
+                                            </button>
+                                            <div id="loginAlert" class="alert alert-danger mt-4 d-none mb-0 small" role="alert"></div>
+                                        </form>
+                                    </div>
+                                    <div class="text-center mt-5 text-muted" style="font-size: 0.85rem;">
+                                        &copy; 2026 BatikOS. All rights reserved.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="view-dasbor" class="page-view">
+                        <!-- Greeting Header -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+                            <div>
+                                <h4 class="fw-bold text-dark mb-1" id="greetingText">Selamat Datang!</h4>
+                                <p class="text-muted mb-0" id="greetingDate" style="font-size: 0.9rem;"></p>
+                            </div>
+                            <div class="mt-2 mt-md-0">
+                                <span class="badge bg-light text-dark border px-3 py-2" style="font-size:0.8rem;">
+                                    <i class="bi bi-clock me-1"></i> <span id="liveClock"></span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- KPI Cards Row -->
+                        <div class="row g-3 mb-4" id="dasbor-cards">
+                            <div class="col-12 text-center text-muted">
+                                <span class="spinner-border spinner-border-sm me-2"></span> Memuat statistik dasbor...
+                            </div>
+                        </div>
+
+                        <!-- Charts Row -->
+                        <div id="dasbor-charts" class="row g-3 mb-4"></div>
+
+                        <!-- Bottom Panels: Recent Transactions + Quick Stats -->
+                        <div class="row g-3 mb-4" id="dasbor-panels"></div>
+                    </div>
+                    <div id="view-inventaris" class="page-view">
+                        <?!= include('ViewInventaris'); ?>
+                    </div>
+                    <div id="view-produksi" class="page-view">
+                        <?!= include('ViewProduksi'); ?>
+                    </div>
+                    <div id="view-penjualan" class="page-view">
+                        <?!= include('ViewPenjualan'); ?>
+                    </div>
+                    <div id="view-pelanggan" class="page-view">
+                        <?!= include('ViewPelanggan'); ?>
+                    </div>
+                    <div id="view-keuangan" class="page-view">
+                        <?!= include('ViewKeuangan'); ?>
+                    </div>
+                    <div id="view-pengguna" class="page-view">
+                        <?!= include('ViewPengguna'); ?>
+                    </div>
+                    <div id="view-visualizer" class="page-view">
+                        <?!= include('ViewVisualizer'); ?>
+                    </div>
+                    <div id="view-pengaturan" class="page-view">
+                        <?!= include('ViewPengaturan'); ?>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav d-none">
+                <a href="#" class="nav-link active" data-page="dasbor" id="bottom-nav-dasbor">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dasbor</span>
+                </a>
+                <a href="#" class="nav-link" data-page="inventaris" id="bottom-nav-inventaris">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Inventaris</span>
+                </a>
+                <a href="#" class="nav-link" data-page="produksi" id="bottom-nav-produksi">
+                    <i class="bi bi-tools"></i>
+                    <span>Produksi</span>
+                </a>
+                <a href="#" class="nav-link" data-page="penjualan" id="bottom-nav-penjualan">
+                    <i class="bi bi-cart3"></i>
+                    <span>Kasir</span>
+                </a>
+                <a href="#" class="nav-link" id="bottom-nav-menu">
+                    <i class="bi bi-list"></i>
+                    <span>Menu</span>
+                </a>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <?!= include('Script'); ?>
+    <?!= include('ScriptInventaris'); ?>
+    <?!= include('ScriptProduksi'); ?>
+    <?!= include('ScriptPenjualan'); ?>
+    <?!= include('ScriptPelanggan'); ?>
+    <?!= include('ScriptKeuangan'); ?>
+    <?!= include('ScriptPengguna'); ?>
+    <?!= include('ScriptVisualizer'); ?>
+    <?!= include('ScriptPengaturan'); ?>
+    <script>
+        // Override default alert
+        window.originalAlert = window.alert;
+        window.alert = function(msg) {
+            let iconType = 'info';
+            const text = (msg || '').toLowerCase();
+            if (text.includes('berhasil') || text.includes('sukses') || text.includes('selesai')) iconType = 'success';
+            if (text.includes('error') || text.includes('gagal') || text.includes('ditolak') || text.includes('tidak mencukupi') || text.includes('habis')) iconType = 'error';
+            if (text.includes('wajib') || text.includes('kosong') || text.includes('minimal')) iconType = 'warning';
+            
+            Swal.fire({
+                text: msg,
+                icon: iconType,
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Bagus',
+                customClass: {
+                    popup: 'rounded-4 shadow-sm border-0',
+                    confirmButton: 'rounded-pill px-4'
+                }
+            });
+        };
+
+        window.confirmAsync = async function(msg) {
+            const result = await Swal.fire({
+                text: msg,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    popup: 'rounded-4 shadow-sm border-0',
+                    confirmButton: 'rounded-pill px-4',
+                    cancelButton: 'rounded-pill px-4'
+                }
+            });
+            return result.isConfirmed;
+        };
+
+        var currentUserRole = "";
+        const SCRIPT_URL = "<?= getScriptUrl() ?>";
+
+        function showLoginView() {
+            // Hide shell elements
+            document.getElementById('sidebarLayout').classList.add('d-none');
+            document.querySelector('.desktop-navbar').classList.add('d-none');
+            document.querySelector('.mobile-header').classList.add('d-none');
+            document.querySelector('.bottom-nav').classList.add('d-none');
+            
+            // Switch view
+            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-login').classList.add('active');
+        }
+
+        function hideLoginView() {
+            // Show shell elements
+            document.getElementById('sidebarLayout').classList.remove('d-none');
+            document.querySelector('.desktop-navbar').classList.remove('d-none');
+            document.querySelector('.mobile-header').classList.remove('d-none');
+            document.querySelector('.bottom-nav').classList.remove('d-none');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnLogin');
+            const spinner = document.getElementById('loginSpinner');
+            const alertBox = document.getElementById('loginAlert');
+            
+            btn.disabled = true;
+            spinner.classList.remove('d-none');
+            alertBox.classList.add('d-none');
+
+            try {
+                const res = await requestAPI('login', {
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value
+                });
+                
+                if (res && res.success) {
+                    setStorage('batikseng_token', res.token);
+                    setStorage('batikseng_user', JSON.stringify(res.user));
+                    
+                    document.getElementById('displayUsername').innerText = res.user.username;
+                    currentUserRole = res.user.role;
+                    
+                    hideLoginView();
+                    applyRoleAccess(currentUserRole);
+                    navigate('dasbor');
+                    loadDashboardStats();
+                    if(typeof loadPengaturan === 'function') loadPengaturan();
+                } else {
+                    alertBox.innerText = res ? res.message : "Error server tidak dikenal.";
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                alertBox.innerText = "Koneksi gagal: " + err.message;
+                alertBox.classList.remove('d-none');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('d-none');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm');
+            if(loginForm) loginForm.addEventListener('submit', handleLogin);
+
+            const token = getStorage('batikseng_token');
+            const savedUserStr = getStorage('batikseng_user');
+            
+            if (token && savedUserStr) {
+                try {
+                    const user = JSON.parse(savedUserStr);
+                    document.getElementById('displayUsername').innerText = user.username;
+                    currentUserRole = user.role;
+                    hideLoginView();
+                    applyRoleAccess(currentUserRole);
+                    navigate('dasbor');
+                    loadDashboardStats();
+                    if(typeof loadPengaturan === 'function') loadPengaturan();
+                } catch(e){
+                    showLoginView();
+                }
+            } else {
+                showLoginView();
+            }
+            // Note: block ini telah dipindah ke logika pengecekan token di atas.
+
+            document.querySelectorAll('.nav-link[data-page]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    if (this.id === 'bottom-nav-menu') return; // handled separately
+                    e.preventDefault();
+                    navigate(this.getAttribute('data-page'), e);
+                });
+            });
+
+            const btnToggle = document.getElementById('btnToggleSidebar');
+            const btnBottomMenu = document.getElementById('bottom-nav-menu');
+            const sidebar = document.getElementById('sidebarLayout');
+            const backdrop = document.getElementById('sidebarBackdrop');
+
+            function toggleSidebar() {
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('show');
+                    backdrop.classList.toggle('show');
+                } else {
+                    if (sidebar.style.marginLeft === '-260px') {
+                        sidebar.style.marginLeft = '0px';
+                    } else {
+                        sidebar.style.marginLeft = '-260px';
+                    }
+                }
+            }
+
+            if(btnToggle) {
+                btnToggle.addEventListener('click', toggleSidebar);
+            }
+            if(btnBottomMenu) {
+                btnBottomMenu.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleSidebar();
+                });
+            }
+            if(backdrop) {
+                backdrop.addEventListener('click', () => {
+                    sidebar.classList.remove('show');
+                    backdrop.classList.remove('show');
+                });
+            }
+
+            const btnLogout = document.getElementById('btnLogout');
+            document.getElementById('btnLogout').addEventListener('click', function(e) {
+                e.preventDefault();
+                clearStorage();
+                showLoginView();
+            });
+
+            const btnMobileLogout = document.getElementById('btnMobileLogout');
+            if (btnMobileLogout) {
+                btnMobileLogout.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    clearStorage();
+                    showLoginView();
+                });
+            }
+        });
+
+        function applyRoleAccess(role) {
+            window.currentUserRole = role;
+            if (role === "Sales" || role === "Staff Produksi") {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    #view-inventaris .btn-primary,
+                    #view-inventaris .btn-success,
+                    #view-inventaris th:last-child { display: none !important; }
+                `;
+                document.head.appendChild(style);
+            }
+
+            if (role === "Sales") {
+                document.getElementById('nav-produksi').style.display = 'none';
+                if(document.getElementById('bottom-nav-produksi')) document.getElementById('bottom-nav-produksi').style.display = 'none';
+                document.getElementById('nav-keuangan').style.display = 'none';
+                document.getElementById('nav-pengguna').style.display = 'none';
+            } else if (role === "Staff Produksi") {
+                document.getElementById('nav-penjualan').style.display = 'none';
+                if(document.getElementById('bottom-nav-penjualan')) document.getElementById('bottom-nav-penjualan').style.display = 'none';
+                document.getElementById('nav-pelanggan').style.display = 'none';
+                document.getElementById('nav-keuangan').style.display = 'none';
+                document.getElementById('nav-pengguna').style.display = 'none';
+            } else if (role === "Staff Finance") {
+                document.getElementById('nav-inventaris').style.display = 'none';
+                if(document.getElementById('bottom-nav-inventaris')) document.getElementById('bottom-nav-inventaris').style.display = 'none';
+                document.getElementById('nav-produksi').style.display = 'none';
+                if(document.getElementById('bottom-nav-produksi')) document.getElementById('bottom-nav-produksi').style.display = 'none';
+                document.getElementById('nav-penjualan').style.display = 'none';
+                if(document.getElementById('bottom-nav-penjualan')) document.getElementById('bottom-nav-penjualan').style.display = 'none';
+                document.getElementById('nav-pelanggan').style.display = 'none';
+                document.getElementById('nav-visualizer').style.display = 'none';
+                document.getElementById('nav-pengaturan').style.display = 'none';
+                document.getElementById('nav-pengguna').style.display = 'none';
+            } else if (role === "Admin" || role === "Pemilik (Owner)") {
+                document.getElementById('nav-pengaturan').style.display = 'block';
+                document.getElementById('nav-pengguna').style.display = 'block';
+            }
+        }
+
+        function navigate(page, event) {
+            // RBAC Guard
+            if (currentUserRole === "Sales" && ["produksi", "keuangan", "pengaturan", "pengguna"].includes(page)) return alert("Akses Ditolak");
+            if (currentUserRole === "Staff Produksi" && ["penjualan", "pelanggan", "keuangan", "pengaturan", "pengguna"].includes(page)) return alert("Akses Ditolak");
+            if (currentUserRole === "Staff Finance" && ["inventaris", "produksi", "penjualan", "pelanggan", "pengaturan", "pengguna"].includes(page)) return alert("Akses Ditolak");
+            if (currentUserRole === "Admin" && page === "approval") return alert("Akses Ditolak"); // Prevent direct approval access if any
+            
+            if(event) {
+                document.querySelectorAll('.sidebar .nav-link, .bottom-nav .nav-link').forEach(el => el.classList.remove('active'));
+                const sidebarLink = document.querySelector(`.sidebar .nav-link[data-page="${page}"]`);
+                const bottomLink = document.querySelector(`.bottom-nav .nav-link[data-page="${page}"]`);
+                if(sidebarLink) sidebarLink.classList.add('active');
+                if(bottomLink) bottomLink.classList.add('active');
+            }
+
+            // Hide sidebar on mobile after clicking a link
+            if (window.innerWidth <= 768) {
+                const sidebar = document.getElementById('sidebarLayout');
+                const backdrop = document.getElementById('sidebarBackdrop');
+                if (sidebar) sidebar.classList.remove('show');
+                if (backdrop) backdrop.classList.remove('show');
+            }
+
+            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+            const viewTarget = document.getElementById('view-' + page);
+            if (viewTarget) viewTarget.classList.add('active');
+
+            const titleMap = {
+                'dasbor': 'Dasbor Utama',
+                'inventaris': 'Manajemen Inventaris',
+                'produksi': 'Modul Produksi',
+                'penjualan': 'Penjualan & Kasir',
+                'pelanggan': 'Manajemen Pelanggan',
+                'keuangan': 'Laporan Keuangan',
+                'visualizer': 'Visualizer Desain',
+                'pengaturan': 'Pengaturan Sistem',
+                'pengguna': 'Manajemen Pengguna'
+            };
+            const pageTitleStr = titleMap[page] || page;
+            document.getElementById('pageTitle').innerText = pageTitleStr;
+            const mobilePageTitle = document.getElementById('mobilePageTitle');
+            if(mobilePageTitle) mobilePageTitle.innerText = pageTitleStr;
+            
+            if (page === 'dasbor') {
+                loadDashboardStats();
+            }
+        }
+
+        async function loadDashboardStats() {
+            // Setup greeting
+            const now = new Date();
+            const hour = now.getHours();
+            const username = document.getElementById('displayUsername')?.innerText || 'Pengguna';
+            let greeting = 'Selamat Malam';
+            if (hour >= 5 && hour < 12) greeting = 'Selamat Pagi';
+            else if (hour >= 12 && hour < 15) greeting = 'Selamat Siang';
+            else if (hour >= 15 && hour < 18) greeting = 'Selamat Sore';
+            
+            const greetEl = document.getElementById('greetingText');
+            if (greetEl) greetEl.innerHTML = `${greeting}, <span class="text-primary">${username}</span> 👋`;
+            
+            const dateEl = document.getElementById('greetingDate');
+            if (dateEl) {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                dateEl.innerText = now.toLocaleDateString('id-ID', options);
+            }
+
+            // Live clock
+            function updateClock() {
+                const el = document.getElementById('liveClock');
+                if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            try {
+                const res = await requestAPI('getDashboardStats');
+                if (res.success) {
+                    renderDashboardCards(res.data);
+                    renderDashboardCharts(res.data);
+                    renderDashboardPanels(res.data);
+                }
+            } catch (err) {
+                console.error("Gagal load dasbor stats", err);
+            }
+        }
+
+        function renderDashboardCards(stats) {
+            const container = document.getElementById('dasbor-cards');
+            container.innerHTML = "";
+            let html = "";
+            
+            const createCard = (title, value, icon, gradient, subtitle) => `
+                <div class="col-6 col-lg-3">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; overflow: hidden;">
+                        <div class="card-body p-3 p-md-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; background: ${gradient};">
+                                    <i class="bi ${icon} text-white" style="font-size: 1.2rem;"></i>
+                                </div>
+                                ${subtitle ? `<span class="badge bg-light text-muted" style="font-size:0.65rem;">${subtitle}</span>` : ''}
+                            </div>
+                            <p class="text-muted text-uppercase fw-semibold mb-1" style="font-size: 0.7rem; letter-spacing: 0.5px;">${title}</p>
+                            <h4 class="fw-bold text-dark mb-0" style="font-size: 1.25rem; letter-spacing: -0.3px;">${value}</h4>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const toRp = (num) => "Rp " + (num || 0).toLocaleString('id-ID');
+
+            if (currentUserRole === "Sales") {
+                html += createCard("Transaksi Hari Ini", stats.transaksiHariIni, "bi-receipt", "linear-gradient(135deg, #667eea, #764ba2)", "Hari Ini");
+                html += createCard("Total Penjualan", toRp(stats.totalPenjualan), "bi-cash-coin", "linear-gradient(135deg, #11998e, #38ef7d)", "Keseluruhan");
+                html += createCard("Pelanggan Aktif", stats.totalPelanggan, "bi-people-fill", "linear-gradient(135deg, #4facfe, #00f2fe)", "Aktif");
+                html += createCard("Penjualan Hari Ini", toRp(stats.penjualanHariIni || 0), "bi-graph-up-arrow", "linear-gradient(135deg, #f093fb, #f5576c)", "Hari Ini");
+            } else if (currentUserRole === "Staff Produksi") {
+                html += createCard("Work Order Aktif", stats.woAktif, "bi-tools", "linear-gradient(135deg, #f093fb, #f5576c)", "Proses");
+                html += createCard("Selesai Hari Ini", stats.woSelesaiHariIni, "bi-check2-circle", "linear-gradient(135deg, #11998e, #38ef7d)", "Hari Ini");
+                html += createCard("Total Work Order", stats.totalWO || 0, "bi-clipboard-data", "linear-gradient(135deg, #4facfe, #00f2fe)", "Semua");
+                html += createCard("Bahan Baku Menipis", stats.bahanBakuHabis + " Item", "bi-exclamation-triangle-fill", "linear-gradient(135deg, #ff5858, #f09819)", "Peringatan");
+            } else if (currentUserRole === "Staff Finance") {
+                html += createCard("Penjualan Hari Ini", toRp(stats.penjualanHariIni || 0), "bi-graph-up-arrow", "linear-gradient(135deg, #11998e, #38ef7d)", "Hari Ini");
+                html += createCard("Total Penjualan", toRp(stats.totalPenjualan), "bi-cash-coin", "linear-gradient(135deg, #667eea, #764ba2)", "Keseluruhan");
+                html += createCard("Total Pengeluaran", toRp(stats.totalPengeluaran), "bi-graph-down-arrow", "linear-gradient(135deg, #ff5858, #f09819)", "Keseluruhan");
+                html += createCard("Laba Bersih", toRp(stats.labaBersih), "bi-piggy-bank-fill", "linear-gradient(135deg, #4facfe, #00f2fe)", "Akumulasi");
+            } else { // Admin & Owner
+                html += createCard("Penjualan Hari Ini", toRp(stats.penjualanHariIni || 0), "bi-graph-up-arrow", "linear-gradient(135deg, #11998e, #38ef7d)", "Hari Ini");
+                html += createCard("Laba Bersih", toRp(stats.labaBersih), "bi-piggy-bank-fill", "linear-gradient(135deg, #667eea, #764ba2)", "Akumulasi");
+                html += createCard("Work Order Aktif", stats.woAktif, "bi-tools", "linear-gradient(135deg, #f093fb, #f5576c)", "Proses");
+                html += createCard("Bahan Baku Menipis", stats.bahanBakuHabis + " Item", "bi-exclamation-triangle-fill", "linear-gradient(135deg, #ff5858, #f09819)", "Peringatan");
+            }
+            container.innerHTML = html;
+            
+            // Render Notifikasi Produksi untuk Admin/Owner ke Navbar
+            const notifListDesktop = document.getElementById('notifListDesktop');
+            const notifBadgeDesktop = document.getElementById('notifBadgeDesktop');
+            const notifListMobile = document.getElementById('notifListMobile');
+            const notifBadgeMobile = document.getElementById('notifBadgeMobile');
+
+            if ((currentUserRole === "Admin" || currentUserRole === "Pemilik (Owner)") && stats.recentProgress && stats.recentProgress.length > 0) {
+                let notifHtml = `
+                    <li><h6 class="dropdown-header">Notifikasi Progres Produksi</h6></li>
+                    <li><hr class="dropdown-divider"></li>
+                `;
+                stats.recentProgress.forEach(p => {
+                    const d = p.Tanggal ? p.Tanggal.split('T')[0] : '-';
+                    notifHtml += `
+                        <li>
+                            <div class="dropdown-item border-bottom border-light py-2" style="white-space: normal;">
+                                <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0 fw-bold text-dark" style="font-size:0.85rem;">${p.ID_WO} <span class="badge bg-secondary ms-1" style="font-size:0.6rem;">${p.Tahap}</span></h6>
+                                    <small class="text-muted" style="font-size:0.7rem;"><i class="bi bi-clock me-1"></i>${d}</small>
+                                </div>
+                                <p class="mb-0 text-muted" style="font-size: 0.8rem;">
+                                    <i class="bi bi-person me-1"></i> <strong>${p.Pelapor}</strong> menyelesaikan <strong class="text-success">${p.JumlahSelesai} Pcs</strong>.
+                                </p>
+                            </div>
+                        </li>
+                    `;
+                });
+                
+                if (notifListDesktop) notifListDesktop.innerHTML = notifHtml;
+                if (notifListMobile) notifListMobile.innerHTML = notifHtml;
+                
+                if (notifBadgeDesktop) {
+                    notifBadgeDesktop.innerText = stats.recentProgress.length;
+                    notifBadgeDesktop.classList.remove('d-none');
+                }
+                if (notifBadgeMobile) {
+                    notifBadgeMobile.innerText = stats.recentProgress.length;
+                    notifBadgeMobile.classList.remove('d-none');
+                }
+            } else {
+                if (notifBadgeDesktop) notifBadgeDesktop.classList.add('d-none');
+                if (notifBadgeMobile) notifBadgeMobile.classList.add('d-none');
+                const emptyNotifHtml = `
+                    <li><h6 class="dropdown-header">Notifikasi Progres Produksi</h6></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><span class="dropdown-item text-muted text-center py-3">Tidak ada notifikasi baru</span></li>
+                `;
+                if (notifListDesktop) notifListDesktop.innerHTML = emptyNotifHtml;
+                if (notifListMobile) notifListMobile.innerHTML = emptyNotifHtml;
+            }
+        }
+
+        function renderDashboardCharts(stats) {
+            const chartContainer = document.getElementById('dasbor-charts');
+            if (!chartContainer) return;
+
+            let html = "";
+            
+            // 1. CHART TREN PENJUALAN
+            if (currentUserRole === "Admin" || currentUserRole === "Pemilik (Owner)" || currentUserRole === "Sales" || currentUserRole === "Staff Finance") {
+                html += `
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                            <div class="card-header bg-white border-bottom py-3" style="border-radius: 12px 12px 0 0;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-graph-up text-primary me-2"></i> Tren Penjualan</h6>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size:0.7rem;">14 Hari</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="chartPenjualan" style="height: 250px; width: 100%;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 2. CHART ARUS KAS
+            if (currentUserRole === "Admin" || currentUserRole === "Pemilik (Owner)" || currentUserRole === "Staff Finance") {
+                html += `
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+                            <div class="card-header bg-white border-bottom py-3" style="border-radius: 12px 12px 0 0;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-bar-chart-line text-success me-2"></i> Arus Kas</h6>
+                                    <span class="badge bg-success bg-opacity-10 text-success" style="font-size:0.7rem;">14 Hari</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="chartArusKas" style="height: 250px; width: 100%;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            chartContainer.innerHTML = html;
+
+            // Inisialisasi Chart.js
+            if (document.getElementById('chartPenjualan')) {
+                const shortLabels = (stats.chartLabels || []).map(d => { const parts = d.split('-'); return parts[2] + '/' + parts[1]; });
+                new Chart(document.getElementById('chartPenjualan').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: shortLabels,
+                        datasets: [{
+                            label: 'Pendapatan (Rp)',
+                            data: stats.chartPenjualan || [],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.08)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#667eea',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, ticks: { callback: v => 'Rp ' + (v/1000000).toFixed(1) + 'jt' } } }
+                    }
+                });
+            }
+
+            if (document.getElementById('chartArusKas')) {
+                const shortLabels = (stats.chartLabels || []).map(d => { const parts = d.split('-'); return parts[2] + '/' + parts[1]; });
+                new Chart(document.getElementById('chartArusKas').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: shortLabels,
+                        datasets: [
+                            {
+                                label: 'Masuk (Rp)',
+                                data: stats.chartCFMasuk || [],
+                                backgroundColor: 'rgba(17, 153, 142, 0.75)',
+                                borderRadius: 6
+                            },
+                            {
+                                label: 'Keluar (Rp)',
+                                data: stats.chartCFKeluar || [],
+                                backgroundColor: 'rgba(255, 88, 88, 0.75)',
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true, ticks: { callback: v => 'Rp ' + (v/1000000).toFixed(1) + 'jt' } } }
+                    }
+                });
+            }
+        }
+
+        function renderDashboardPanels(stats) {
+            const panelsContainer = document.getElementById('dasbor-panels');
+            if (!panelsContainer) return;
+            let html = "";
+
+            // LEFT: Transaksi Terbaru
+            if (currentUserRole === "Admin" || currentUserRole === "Pemilik (Owner)" || currentUserRole === "Sales") {
+                html += `
+                    <div class="col-lg-7">
+                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                            <div class="card-header bg-white border-bottom py-3" style="border-radius: 12px 12px 0 0;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-receipt-cutoff text-primary me-2"></i> Transaksi Terbaru</h6>
+                                    <a href="#" class="text-primary text-decoration-none small fw-semibold" onclick="navigate('penjualan', event); return false;">Lihat Semua →</a>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="font-size:0.8rem;">Invoice</th>
+                                            <th style="font-size:0.8rem;">Pelanggan</th>
+                                            <th style="font-size:0.8rem;">Total</th>
+                                            <th style="font-size:0.8rem;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
+                if (stats.recentTransaksi && stats.recentTransaksi.length > 0) {
+                    stats.recentTransaksi.forEach(t => {
+                        const statusBadge = t.Status === 'Lunas' ? 'bg-success' : (t.Status === 'Batal' ? 'bg-danger' : 'bg-warning text-dark');
+                        html += `
+                            <tr>
+                                <td class="fw-semibold" style="font-size:0.85rem;">${t.ID}</td>
+                                <td style="font-size:0.85rem;">${t.Pelanggan}</td>
+                                <td class="fw-bold" style="font-size:0.85rem;">Rp ${(t.Total || 0).toLocaleString('id-ID')}</td>
+                                <td><span class="badge ${statusBadge}" style="font-size:0.7rem;">${t.Status}</span></td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    html += `<tr><td colspan="4" class="text-center py-4 text-muted">Belum ada transaksi.</td></tr>`;
+                }
+                html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // RIGHT: Quick Stats Overview
+            html += `
+                <div class="${(currentUserRole === 'Admin' || currentUserRole === 'Pemilik (Owner)' || currentUserRole === 'Sales') ? 'col-lg-5' : 'col-12'}">
+                    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                        <div class="card-header bg-white border-bottom py-3" style="border-radius: 12px 12px 0 0;">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-clipboard-data text-info me-2"></i> Ringkasan Bisnis</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+            `;
+
+            const quickStatItem = (icon, label, value, color) => `
+                <div class="list-group-item d-flex justify-content-between align-items-center px-4 py-3 border-0 border-bottom">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center me-3" style="width:36px;height:36px;background:${color};">
+                            <i class="bi ${icon} text-white" style="font-size:0.9rem;"></i>
+                        </div>
+                        <span class="fw-medium" style="font-size:0.85rem;">${label}</span>
+                    </div>
+                    <span class="fw-bold text-dark" style="font-size:0.9rem;">${value}</span>
+                </div>
+            `;
+
+            const toRp = (num) => "Rp " + (num || 0).toLocaleString('id-ID');
+
+            if (currentUserRole === "Admin" || currentUserRole === "Pemilik (Owner)") {
+                html += quickStatItem("bi-cash-coin", "Total Penjualan", toRp(stats.totalPenjualan), "linear-gradient(135deg, #11998e, #38ef7d)");
+                html += quickStatItem("bi-box-seam", "Total Produk", stats.totalProduk || 0, "linear-gradient(135deg, #667eea, #764ba2)");
+                html += quickStatItem("bi-palette", "Total Bahan Baku", stats.totalBahanBaku || 0, "linear-gradient(135deg, #4facfe, #00f2fe)");
+                html += quickStatItem("bi-people-fill", "Pelanggan Aktif", stats.totalPelanggan, "linear-gradient(135deg, #f093fb, #f5576c)");
+                html += quickStatItem("bi-truck", "PO Belum Selesai", stats.poAktif, "linear-gradient(135deg, #ff5858, #f09819)");
+                html += quickStatItem("bi-clipboard-check", "Total Work Order", stats.totalWO || 0, "linear-gradient(135deg, #fbc2eb, #a6c1ee)");
+            } else if (currentUserRole === "Sales") {
+                html += quickStatItem("bi-people-fill", "Pelanggan Aktif", stats.totalPelanggan, "linear-gradient(135deg, #4facfe, #00f2fe)");
+                html += quickStatItem("bi-box-seam", "Total Produk", stats.totalProduk || 0, "linear-gradient(135deg, #667eea, #764ba2)");
+                html += quickStatItem("bi-receipt", "Transaksi Hari Ini", stats.transaksiHariIni, "linear-gradient(135deg, #f093fb, #f5576c)");
+            } else if (currentUserRole === "Staff Produksi") {
+                html += quickStatItem("bi-tools", "WO Aktif", stats.woAktif, "linear-gradient(135deg, #f093fb, #f5576c)");
+                html += quickStatItem("bi-check2-circle", "WO Selesai Hari Ini", stats.woSelesaiHariIni, "linear-gradient(135deg, #11998e, #38ef7d)");
+                html += quickStatItem("bi-palette", "Total Bahan Baku", stats.totalBahanBaku || 0, "linear-gradient(135deg, #4facfe, #00f2fe)");
+                html += quickStatItem("bi-exclamation-triangle", "Bahan Baku Menipis", stats.bahanBakuHabis, "linear-gradient(135deg, #ff5858, #f09819)");
+            } else if (currentUserRole === "Staff Finance") {
+                html += quickStatItem("bi-wallet2", "Arus Kas Hari Ini", toRp(stats.kasHariIni), "linear-gradient(135deg, #4facfe, #00f2fe)");
+                html += quickStatItem("bi-cash-coin", "Total Penjualan", toRp(stats.totalPenjualan), "linear-gradient(135deg, #11998e, #38ef7d)");
+                html += quickStatItem("bi-graph-down-arrow", "Total Pengeluaran", toRp(stats.totalPengeluaran), "linear-gradient(135deg, #ff5858, #f09819)");
+                html += quickStatItem("bi-piggy-bank", "Laba Bersih", toRp(stats.labaBersih), "linear-gradient(135deg, #667eea, #764ba2)");
+            }
+
+            html += `
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // BAHAN BAKU MENIPIS TABLE (full width, for Admin/Owner/Staff Produksi)
+            if (currentUserRole === "Admin" || currentUserRole === "Pemilik (Owner)" || currentUserRole === "Staff Produksi") {
+                html += `
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                            <div class="card-header bg-white border-bottom py-3" style="border-radius: 12px 12px 0 0;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i> Peringatan Stok Bahan Baku Menipis</h6>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger" style="font-size:0.7rem;">${(stats.bahanBakuMenipisList || []).length} item</span>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="font-size:0.8rem;">ID Item</th>
+                                            <th style="font-size:0.8rem;">Nama Item</th>
+                                            <th style="font-size:0.8rem;">Sisa Stok</th>
+                                            <th style="font-size:0.8rem;">Batas Minimum</th>
+                                            <th style="font-size:0.8rem;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
+                if (stats.bahanBakuMenipisList && stats.bahanBakuMenipisList.length > 0) {
+                    stats.bahanBakuMenipisList.forEach(b => {
+                        const stok = parseFloat(b.StokSaatIni || 0);
+                        const min = parseFloat(b.StokMinimum || 0);
+                        const statusBadge = stok === 0 ? '<span class="badge bg-danger">Habis</span>' : '<span class="badge bg-warning text-dark">Menipis</span>';
+                        html += `
+                            <tr>
+                                <td class="fw-semibold" style="font-size:0.85rem;">${b.ID}</td>
+                                <td style="font-size:0.85rem;">${b.NamaItem}</td>
+                                <td class="text-danger fw-bold" style="font-size:0.85rem;">${b.StokSaatIni} ${b.Satuan || ''}</td>
+                                <td style="font-size:0.85rem;">${b.StokMinimum} ${b.Satuan || ''}</td>
+                                <td>${statusBadge}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    html += `<tr><td colspan="5" class="text-center py-4 text-muted"><i class="bi bi-check-circle text-success me-2"></i>Stok semua bahan baku dalam kondisi aman.</td></tr>`;
+                }
+                html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            panelsContainer.innerHTML = html;
+        }
+    </script>
+
+</body>
+</html>
+

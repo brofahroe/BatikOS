@@ -1,0 +1,75 @@
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1">Manajemen Pengguna</h5>
+            <p class="text-muted mb-0 small">Kelola akses, role, dan akun staf Anda</p>
+        </div>
+        <button class="btn btn-primary" onclick="showModalPengguna()"><i class="bi bi-person-plus me-1"></i> Tambah Pengguna</button>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-3 bg-white">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="tablePengguna">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Nama Pengguna (Username)</th>
+                        <th>Peran (Role)</th>
+                        <th>Tanggal Dibuat</th>
+                        <th>Status</th>
+                        <th class="text-center pe-4">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="5" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span> Memuat data pengguna...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pengguna -->
+<div class="modal fade" id="modalPengguna" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-person-badge me-2"></i> Form Pengguna</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formPengguna" onsubmit="savePengguna(event)">
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Nama Pengguna (Username)</label>
+                        <input type="text" class="form-control" id="user_nama" required>
+                        <small class="text-muted">Username digunakan untuk login. Pastikan unik.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium" id="lbl_user_password">Kata Sandi</label>
+                        <input type="password" class="form-control" id="user_password" placeholder="Kosongkan jika tidak ingin mengubah sandi">
+                        <small class="text-muted" id="hint_user_password">Password minimal 6 karakter.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Peran (Role)</label>
+                        <select class="form-select" id="user_role" required>
+                            <option value="">Pilih Peran...</option>
+                            <option value="Pemilik (Owner)">Pemilik (Owner)</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Staff Produksi">Staff Produksi</option>
+                            <option value="Staff Finance">Staff Finance</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">Status Akun</label>
+                        <select class="form-select" id="user_status" required>
+                            <option value="Aktif">Aktif</option>
+                            <option value="Nonaktif">Nonaktif</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Simpan Pengguna</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

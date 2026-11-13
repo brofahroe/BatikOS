@@ -1,0 +1,330 @@
+<script>
+    const visState = {
+        garment: 'kemeja_pendek',
+        colorBase: '#ffffff',
+        scale: 1.0,
+        rotate: 0,
+        motifImg: null,
+        motifBase64: null,
+        motifs: [],
+        designs: []
+    };
+
+    let visualizerCanvas, ctx;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        visualizerCanvas = document.getElementById('visualizerCanvas');
+        if (visualizerCanvas) {
+            ctx = visualizerCanvas.getContext('2d');
+            initVisualizerEvents();
+            drawVisualizer();
+            loadDesigns();
+        }
+    });
+
+    function initVisualizerEvents() {
+        document.getElementById('selGarment').addEventListener('change', (e) => {
+            visState.garment = e.target.value;
+            drawVisualizer();
+        });
+        
+        document.getElementById('colorBase').addEventListener('input', (e) => {
+            visState.colorBase = e.target.value;
+            drawVisualizer();
+        });
+        
+        document.getElementById('rangeScale').addEventListener('input', (e) => {
+            visState.scale = parseFloat(e.target.value);
+            document.getElementById('lblScale').innerText = visState.scale.toFixed(1) + 'x';
+            drawVisualizer();
+        });
+        
+        document.getElementById('rangeRotate').addEventListener('input', (e) => {
+            visState.rotate = parseInt(e.target.value);
+            document.getElementById('lblRotate').innerText = visState.rotate + '°';
+            drawVisualizer();
+        });
+
+        document.getElementById('uploadMotifInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.onload = function() {
+                        visState.motifImg = img;
+                        visState.motifBase64 = event.target.result;
+                        addMotifToLibrary(event.target.result);
+                        drawVisualizer();
+                    }
+                    img.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('btnSaveMockup').addEventListener('click', saveMockupDesign);
+    }
+
+    function addMotifToLibrary(base64) {
+        document.getElementById('motifLibEmpty').style.display = 'none';
+        const container = document.getElementById('motifLibraryContainer');
+        const imgEl = document.createElement('img');
+        imgEl.src = base64;
+        imgEl.style.width = '60px';
+        imgEl.style.height = '60px';
+        imgEl.style.objectFit = 'cover';
+        imgEl.style.cursor = 'pointer';
+        imgEl.className = 'border border-2 border-primary rounded';
+        
+        imgEl.onclick = () => {
+            visState.motifImg = imgEl;
+            visState.motifBase64 = base64;
+            drawVisualizer();
+            
+            // Remove border from others
+            Array.from(container.children).forEach(child => {
+                if(child.tagName === 'IMG') {
+                    child.className = 'border rounded';
+                }
+            });
+            imgEl.className = 'border border-2 border-primary rounded';
+        };
+        
+        container.appendChild(imgEl);
+    }
+
+    function drawVisualizer() {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+        
+        // 1. Draw Garment Path
+        ctx.save();
+        buildGarmentPath();
+        
+        // 2. Fill Base Color
+        ctx.fillStyle = visState.colorBase;
+        ctx.fill();
+        
+        // 3. Clip to garment bounds
+        ctx.clip();
+        
+        // 4. Draw Motif Pattern if exists
+        if (visState.motifImg) {
+            // Create offscreen canvas for scaled/rotated pattern
+            const pCanvas = document.createElement('canvas');
+            const pCtx = pCanvas.getContext('2d');
+            
+            const w = visState.motifImg.width * visState.scale;
+            const h = visState.motifImg.height * visState.scale;
+            pCanvas.width = w;
+            pCanvas.height = h;
+            
+            pCtx.translate(w/2, h/2);
+            pCtx.rotate(visState.rotate * Math.PI / 180);
+            pCtx.drawImage(visState.motifImg, -w/2, -h/2, w, h);
+            
+            const pattern = ctx.createPattern(pCanvas, 'repeat');
+            ctx.fillStyle = pattern;
+            
+            // Use multiply blend mode to blend pattern with base color
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+            ctx.globalCompositeOperation = 'source-over';
+        }
+        
+        ctx.restore();
+        
+        // Draw Outlines
+        ctx.save();
+        buildGarmentPath();
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Helper to generate clothing shapes using Canvas Paths
+    function buildGarmentPath() {
+        ctx.beginPath();
+        const type = visState.garment;
+        const cx = 250;
+        const cy = 100;
+        
+        if (type === 'kemeja_pendek') {
+            ctx.moveTo(cx - 50, cy); // leher kiri
+            ctx.lineTo(cx + 50, cy); // leher kanan
+            ctx.lineTo(cx + 150, cy + 50); // bahu kanan
+            ctx.lineTo(cx + 150, cy + 150); // lengan kanan bawah
+            ctx.lineTo(cx + 100, cy + 150); // ketiak kanan
+            ctx.lineTo(cx + 100, cy + 400); // pinggang kanan
+            ctx.lineTo(cx - 100, cy + 400); // pinggang kiri
+            ctx.lineTo(cx - 100, cy + 150); // ketiak kiri
+            ctx.lineTo(cx - 150, cy + 150); // lengan kiri bawah
+            ctx.lineTo(cx - 150, cy + 50); // bahu kiri
+            ctx.closePath();
+        } else if (type === 'kemeja_panjang') {
+            ctx.moveTo(cx - 50, cy); 
+            ctx.lineTo(cx + 50, cy); 
+            ctx.lineTo(cx + 150, cy + 50); 
+            ctx.lineTo(cx + 200, cy + 300); // ujung lengan kanan
+            ctx.lineTo(cx + 150, cy + 300); // pergelangan kanan
+            ctx.lineTo(cx + 100, cy + 150); 
+            ctx.lineTo(cx + 100, cy + 400); 
+            ctx.lineTo(cx - 100, cy + 400); 
+            ctx.lineTo(cx - 100, cy + 150); 
+            ctx.lineTo(cx - 150, cy + 300); // pergelangan kiri
+            ctx.lineTo(cx - 200, cy + 300); // ujung lengan kiri
+            ctx.lineTo(cx - 150, cy + 50); 
+            ctx.closePath();
+        } else if (type === 'blouse') {
+            ctx.moveTo(cx - 60, cy + 20); 
+            ctx.quadraticCurveTo(cx, cy + 50, cx + 60, cy + 20); // leher wanita
+            ctx.lineTo(cx + 120, cy + 60); 
+            ctx.lineTo(cx + 110, cy + 120); 
+            ctx.lineTo(cx + 80, cy + 120); 
+            ctx.quadraticCurveTo(cx + 90, cy + 250, cx + 100, cy + 350); 
+            ctx.lineTo(cx - 100, cy + 350); 
+            ctx.quadraticCurveTo(cx - 90, cy + 250, cx - 80, cy + 120); 
+            ctx.lineTo(cx - 110, cy + 120); 
+            ctx.lineTo(cx - 120, cy + 60); 
+            ctx.closePath();
+        } else if (type === 'tunik') {
+            ctx.moveTo(cx - 50, cy); 
+            ctx.lineTo(cx + 50, cy); 
+            ctx.lineTo(cx + 120, cy + 60); 
+            ctx.lineTo(cx + 150, cy + 250); // lengan 3/4
+            ctx.lineTo(cx + 110, cy + 250); 
+            ctx.lineTo(cx + 90, cy + 150); 
+            ctx.lineTo(cx + 120, cy + 450); // bawah panjang
+            ctx.lineTo(cx - 120, cy + 450); 
+            ctx.lineTo(cx - 90, cy + 150); 
+            ctx.lineTo(cx - 110, cy + 250); 
+            ctx.lineTo(cx - 150, cy + 250); 
+            ctx.lineTo(cx - 120, cy + 60); 
+            ctx.closePath();
+        }
+    }
+
+    async function saveMockupDesign() {
+        const namaDesain = document.getElementById('inputNamaDesain').value;
+        if (!namaDesain) return alert("Masukkan nama desain terlebih dahulu!");
+        if (!visState.motifBase64) return alert("Silakan upload motif terlebih dahulu!");
+
+        document.getElementById('visLoading').style.display = 'flex';
+        document.getElementById('btnSaveMockup').disabled = true;
+
+        try {
+            // 1. Dapatkan base64 dari canvas final
+            const mockupBase64 = visualizerCanvas.toDataURL('image/png');
+            
+            // 2. Upload Mockup ke Drive via API
+            const uploadRes = await requestAPI('uploadImageBase64', {
+                filename: `Mockup_${Date.now()}.png`,
+                base64: mockupBase64,
+                folderName: "BatikSeng_Visualizer"
+            });
+
+            if (!uploadRes.success) throw new Error("Gagal upload gambar: " + uploadRes.message);
+
+            // 3. Simpan data desain ke Spreadsheet
+            const desainData = {
+                NamaDesain: namaDesain,
+                IDPelanggan: "-",
+                ModelPakaian: visState.garment,
+                WarnaDasar: visState.colorBase,
+                StatusApproval: "Draft",
+                URLMockup: uploadRes.url,
+                DibuatOleh: currentUserRole,
+                TanggalDibuat: new Date().toISOString()
+            };
+
+            const saveRes = await requestAPI('create', { sheet: "DesainVisualizer", data: desainData });
+            
+            if (saveRes.success) {
+                // Tampilkan Share Link
+                const linkUrl = `${SCRIPT_URL}?public=true&designId=${saveRes.id}`;
+                document.getElementById('shareLinkContainer').style.display = 'block';
+                document.getElementById('shareLinkUrl').value = linkUrl;
+                loadDesigns();
+            } else {
+                alert("Gagal menyimpan data desain: " + saveRes.message);
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("Terjadi kesalahan: " + err.message);
+        } finally {
+            document.getElementById('visLoading').style.display = 'none';
+            document.getElementById('btnSaveMockup').disabled = false;
+        }
+    }
+
+    function copyShareLink() {
+        const input = document.getElementById('shareLinkUrl');
+        input.select();
+        document.execCommand('copy');
+        
+        const btn = document.getElementById('btnCopyLink');
+        const origText = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check"></i> Copied';
+        setTimeout(() => { btn.innerHTML = origText; }, 2000);
+    }
+
+    async function loadDesigns() {
+        const tbody = document.querySelector('#tableDesainVisualizer tbody');
+        try {
+            const res = await requestAPI('read', { sheet: "DesainVisualizer" });
+            if (res.success) {
+                visState.designs = res.data;
+                renderDesignTable();
+            }
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Gagal memuat data</td></tr>';
+        }
+    }
+
+    function renderDesignTable() {
+        const tbody = document.querySelector('#tableDesainVisualizer tbody');
+        if (visState.designs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Belum ada desain tersimpan</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        visState.designs.reverse().forEach(d => {
+            let badgeClass = 'bg-secondary';
+            if(d.StatusApproval === 'Approved') badgeClass = 'bg-success';
+            if(d.StatusApproval === 'Review') badgeClass = 'bg-warning text-dark';
+            if(d.StatusApproval === 'Rejected') badgeClass = 'bg-danger';
+
+            let imgUrl = d.URLMockup || '';
+            if (imgUrl.includes('/file/d/')) {
+                const idPart = imgUrl.split('/file/d/')[1].split('/')[0];
+                imgUrl = `https://drive.google.com/thumbnail?id=${idPart}&sz=w200`;
+            } else if (imgUrl.includes('uc?export=view&id=')) {
+                const idPart = imgUrl.split('id=')[1].split('&')[0];
+                imgUrl = `https://drive.google.com/thumbnail?id=${idPart}&sz=w200`;
+            }
+
+            const linkUrl = `${SCRIPT_URL}?public=true&designId=${d.ID}`;
+
+            html += `
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="${imgUrl}" width="40" height="40" class="rounded me-2 object-fit-cover border">
+                            <span class="fw-medium">${d.NamaDesain}</span>
+                        </div>
+                    </td>
+                    <td><span class="text-capitalize">${(d.ModelPakaian||'').replace('_',' ')}</span></td>
+                    <td><span class="badge ${badgeClass}">${d.StatusApproval}</span></td>
+                    <td>
+                        <a href="${linkUrl}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-link-45deg"></i> Link</a>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+</script>

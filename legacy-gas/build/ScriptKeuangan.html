@@ -1,0 +1,165 @@
+<script>
+var dataKas = [];
+var labaRugiData = null;
+
+async function loadKeuangan() {
+    document.getElementById('kas_tanggal').valueAsDate = new Date();
+    updateKategoriOptions();
+    await fetchLaporanKeuangan();
+}
+
+async function fetchLaporanKeuangan() {
+    const tbody = document.querySelector('#tableBukuKas tbody');
+    if(tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Memuat data kas...</td></tr>';
+    
+    try {
+        const res = await requestAPI('getLaporanKeuangan');
+        if (res.success) {
+            dataKas = res.data.kas;
+            labaRugiData = res.data.labaRugi;
+            renderDasborKeuangan();
+            renderBukuKas();
+        } else {
+            console.error("Gagal load keuangan:", res.message);
+            if(tbody) tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">Gagal memuat: ${res.message}</td></tr>`;
+        }
+    } catch(err) {
+        console.error(err);
+    }
+}
+
+function renderDasborKeuangan() {
+    if(!labaRugiData) return;
+    
+    document.getElementById('dashPendapatan').innerText = 'Rp ' + labaRugiData.Pendapatan.toLocaleString('id-ID');
+    
+    const totalPengeluaran = labaRugiData.PembelianBahan + labaRugiData.PengeluaranOperasional;
+    document.getElementById('dashPengeluaran').innerText = 'Rp ' + totalPengeluaran.toLocaleString('id-ID');
+    document.getElementById('dashDetailPengeluaran').innerText = `Bahan Baku: Rp ${labaRugiData.PembelianBahan.toLocaleString('id-ID')} | Operasional: Rp ${labaRugiData.PengeluaranOperasional.toLocaleString('id-ID')}`;
+    
+    const elLaba = document.getElementById('dashLabaBersih');
+    elLaba.innerText = 'Rp ' + labaRugiData.LabaBersih.toLocaleString('id-ID');
+    
+    // Change color based on profit/loss
+    if (labaRugiData.LabaBersih < 0) {
+        elLaba.classList.remove('text-white');
+        elLaba.classList.add('text-danger');
+        elLaba.parentElement.parentElement.classList.replace('bg-primary', 'bg-dark');
+    } else {
+        elLaba.classList.remove('text-danger');
+        elLaba.classList.add('text-white');
+        elLaba.parentElement.parentElement.classList.replace('bg-dark', 'bg-primary');
+    }
+}
+
+function renderBukuKas() {
+    const tbody = document.querySelector('#tableBukuKas tbody');
+    if(!tbody) return;
+    tbody.innerHTML = '';
+    
+    if (dataKas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada transaksi tercatat.</td></tr>';
+        return;
+    }
+    
+    dataKas.forEach(kas => {
+        let isMasuk = kas.Tipe === "MASUK";
+        let badgeType = isMasuk ? "bg-success" : "bg-danger";
+        let sign = isMasuk ? "+" : "-";
+        let textClass = isMasuk ? "text-success" : "text-danger";
+        
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${kas.Tanggal ? new Date(kas.Tanggal).toLocaleDateString('id-ID') : '-'}</td>
+            <td><span class="badge ${badgeType}">${kas.Tipe}</span></td>
+            <td><span class="fw-semibold">${kas.Kategori}</span></td>
+            <td class="fw-bold ${textClass}">${sign}Rp ${(parseFloat(kas.Nominal)||0).toLocaleString('id-ID')}</td>
+            <td><small class="text-muted">${kas.Keterangan}</small></td>
+            <td><small>${kas.TercatatOleh}</small></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+const KATEGORI_KAS = {
+    "KELUAR": ["Pembelian Bahan", "Biaya Gaji / Upah", "Biaya Listrik & Air", "Biaya Transportasi", "Sewa Tempat", "Konsumsi Harian", "Lain-lain"],
+    "MASUK": ["Penjualan", "Suntikan Modal", "Pendapatan Lain-lain"]
+};
+
+function updateKategoriOptions() {
+    const tipe = document.getElementById('kas_tipe').value;
+    const sel = document.getElementById('kas_kategori');
+    sel.innerHTML = '';
+    const options = KATEGORI_KAS[tipe] || [];
+    options.forEach(opt => {
+        sel.innerHTML += `<option value="${opt}">${opt}</option>`;
+    });
+}
+
+function setShortcutKas(tipe, kategori) {
+    document.getElementById('kas_tipe').value = tipe;
+    updateKategoriOptions();
+    document.getElementById('kas_kategori').value = kategori;
+    
+    // Switch to input tab
+    const tabInput = document.getElementById('inputkas-tab');
+    if(tabInput) {
+        const bsTab = new bootstrap.Tab(tabInput);
+        bsTab.show();
+    }
+    document.getElementById('kas_nominal').focus();
+}
+
+async function simpanKasManual(e) {
+    e.preventDefault();
+    
+    const user = JSON.parse(getStorage('batikseng_user') || '{}');
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+    btn.disabled = true;
+    
+    const payload = {
+        Tanggal: document.getElementById('kas_tanggal').value,
+        Tipe: document.getElementById('kas_tipe').value,
+        Kategori: document.getElementById('kas_kategori').value,
+        Nominal: document.getElementById('kas_nominal').value,
+        Keterangan: document.getElementById('kas_keterangan').value,
+        Kasir: user.username || "Admin"
+    };
+    
+    try {
+        const res = await requestAPI('createKasManual', payload);
+        if (res.success) {
+            document.getElementById('formKasManual').reset();
+            document.getElementById('kas_tanggal').valueAsDate = new Date();
+            updateKategoriOptions();
+            
+            // Pindah ke tab Buku Kas
+            const tabBukuKas = document.getElementById('bukukas-tab');
+            if(tabBukuKas) new bootstrap.Tab(tabBukuKas).show();
+            
+            await fetchLaporanKeuangan();
+        } else {
+            alert("Gagal menyimpan: " + res.message);
+        }
+    } catch(err) {
+        alert("Error: " + err.message);
+    }
+    
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+}
+
+// Tambahkan loadKeuangan ke DOMContentLoaded global (opsional, karena views switch logic)
+// Namun karena kita pakai sistem SPA switchView, sebaiknya kita inject call loadKeuangan() 
+// dari switchView atau secara manual.
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        if(getStorage('batikseng_token')) {
+            loadKeuangan();
+        }
+    }, 800);
+});
+</script>

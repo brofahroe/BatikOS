@@ -1,0 +1,173 @@
+<script>
+var dataPelangganList = [];
+
+async function loadPelanggan() {
+    const tbody = document.querySelector('#tablePelanggan tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = `<tr>
+        <td colspan="7" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Memuat...</span></div>
+            <div class="mt-2 text-muted">Mengambil data pelanggan...</div>
+        </td>
+    </tr>`;
+    
+    try {
+        const res = await requestAPI('read', { sheet: 'Pelanggan' });
+        if (res.success) {
+            dataPelangganList = res.data;
+            renderTablePelanggan();
+        } else {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Gagal memuat data: ${res.message}</td></tr>`;
+        }
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error: ${e.message}</td></tr>`;
+    }
+}
+
+function filterPelanggan() {
+    renderTablePelanggan();
+}
+
+function renderTablePelanggan() {
+    const tbody = document.querySelector('#tablePelanggan tbody');
+    if (!tbody) return;
+    
+    const keyword = document.getElementById('searchPelanggan').value.toLowerCase();
+    const filterKategori = document.getElementById('filterKategoriPelanggan').value;
+    
+    let filtered = dataPelangganList.filter(p => p.Status !== 'Dihapus');
+    
+    if (keyword) {
+        filtered = filtered.filter(p => 
+            (p.Nama && p.Nama.toLowerCase().includes(keyword)) ||
+            (p['Nama Instansi'] && p['Nama Instansi'].toLowerCase().includes(keyword)) ||
+            (p.WhatsApp && p.WhatsApp.toLowerCase().includes(keyword))
+        );
+    }
+    
+    if (filterKategori) {
+        filtered = filtered.filter(p => p.Kategori === filterKategori);
+    }
+    
+    tbody.innerHTML = '';
+    
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted">
+            <i class="bi bi-person-x fs-1 d-block mb-2"></i>
+            Tidak ada pelanggan yang ditemukan.
+        </td></tr>`;
+        return;
+    }
+    
+    filtered.forEach(p => {
+        const tr = document.createElement('tr');
+        const instansiHtml = p['Nama Instansi'] ? `<br><small class="text-muted"><i class="bi bi-building"></i> ${p['Nama Instansi']}</small>` : '';
+        const totalBelanja = parseFloat(p.TotalBelanja) || 0;
+        
+        let badgeColor = 'bg-secondary';
+        if (p.Kategori === 'Reseller') badgeColor = 'bg-info';
+        if (p.Kategori === 'Perusahaan / Instansi') badgeColor = 'bg-primary';
+        
+        tr.innerHTML = `
+            <td class="ps-4">
+                <div class="fw-semibold text-dark">${p.Nama || '-'}</div>
+            </td>
+            <td>${p['Nama Instansi'] || '-'}</td>
+            <td><a href="https://wa.me/${p.WhatsApp}" target="_blank" class="text-decoration-none"><i class="bi bi-whatsapp text-success me-1"></i>${p.WhatsApp || '-'}</a></td>
+            <td>${p.Kota || '-'}</td>
+            <td><span class="badge ${badgeColor}">${p.Kategori || 'Umum'}</span></td>
+            <td class="fw-semibold">Rp ${totalBelanja.toLocaleString('id-ID')}</td>
+            <td class="text-end pe-4">
+                <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openModalPelanggan('${p.ID}')">
+                    <i class="bi bi-pencil-square"></i> Edit
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function openModalPelanggan(id = null) {
+    const form = document.getElementById('formPelanggan');
+    form.reset();
+    document.getElementById('pel_id').value = '';
+    document.getElementById('pel_wa').value = '62';
+    document.getElementById('modalPelangganLabel').innerText = 'Tambah Pelanggan Baru';
+    
+    if (id) {
+        const p = dataPelangganList.find(x => x.ID === id);
+        if (p) {
+            document.getElementById('modalPelangganLabel').innerText = 'Edit Data Pelanggan';
+            document.getElementById('pel_id').value = p.ID;
+            document.getElementById('pel_nama').value = p.Nama || '';
+            document.getElementById('pel_instansi').value = p['Nama Instansi'] || '';
+            document.getElementById('pel_wa').value = p.WhatsApp || '62';
+            document.getElementById('pel_email').value = p.Email || '';
+            document.getElementById('pel_kota').value = p.Kota || '';
+            document.getElementById('pel_kategori').value = p.Kategori || 'Umum';
+            document.getElementById('pel_alamat').value = p.Alamat || '';
+        }
+    }
+    
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPelanggan')).show();
+}
+
+async function simpanPelanggan(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnSimpanPelanggan');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+    btn.disabled = true;
+    
+    const id = document.getElementById('pel_id').value;
+    const isEdit = !!id;
+    
+    const payload = {
+        "Nama": document.getElementById('pel_nama').value,
+        "Nama Instansi": document.getElementById('pel_instansi').value,
+        "WhatsApp": document.getElementById('pel_wa').value,
+        "Email": document.getElementById('pel_email').value,
+        "Kota": document.getElementById('pel_kota').value,
+        "Kategori": document.getElementById('pel_kategori').value,
+        "Alamat": document.getElementById('pel_alamat').value
+    };
+    
+    try {
+        let res;
+        if (isEdit) {
+            res = await requestAPI('update', { sheet: 'Pelanggan', id: id, data: payload });
+        } else {
+            payload["Status"] = "Aktif";
+            payload["TanggalDibuat"] = new Date().toISOString();
+            payload["TotalBelanja"] = 0;
+            res = await requestAPI('create', { sheet: 'Pelanggan', data: payload });
+        }
+        
+        if (res.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalPelanggan')).hide();
+            await loadPelanggan();
+            
+            // Juga refresh data di Kasir jika module Kasir sudah diload
+            if(typeof fetchPelangganPOS === 'function') {
+                fetchPelangganPOS();
+            }
+        } else {
+            alert('Gagal menyimpan: ' + res.message);
+        }
+    } catch (err) {
+        alert('Terjadi kesalahan: ' + err.message);
+    }
+    
+    btn.innerHTML = '<i class="bi bi-save me-1"></i> Simpan Pelanggan';
+    btn.disabled = false;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Beri jeda sedikit agar token sudah tersimpan sebelum load data
+    setTimeout(() => {
+        if (getStorage('batikseng_token')) {
+            loadPelanggan();
+        }
+    }, 1000);
+});
+</script>

@@ -1,0 +1,258 @@
+<div class="row mb-3">
+    <div class="col-12">
+        <ul class="nav nav-pills" id="penjualanTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="kasir-tab" data-bs-toggle="pill" data-bs-target="#kasir-panel" type="button" role="tab">Point of Sales (Kasir)</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="riwayat-penjualan-tab" data-bs-toggle="pill" data-bs-target="#riwayat-penjualan-panel" type="button" role="tab" onclick="fetchRiwayatPenjualan()">Riwayat Transaksi</button>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="tab-content" id="penjualanTabsContent">
+    <!-- TAB KASIR -->
+    <div class="tab-pane fade show active" id="kasir-panel" role="tabpanel">
+        <div class="row g-3">
+            <!-- Kiri: Katalog Produk -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4 d-flex justify-content-between align-items-center">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="tipe_pesanan" id="tipe_ready" value="Ready Stock" autocomplete="off" checked onchange="toggleModePOS()">
+                            <label class="btn btn-outline-primary" for="tipe_ready">Ready Stock</label>
+
+                            <input type="radio" class="btn-check" name="tipe_pesanan" id="tipe_bahan" value="Bahan Batik" autocomplete="off" onchange="toggleModePOS()">
+                            <label class="btn btn-outline-primary" for="tipe_bahan">Bahan Batik</label>
+
+                            <input type="radio" class="btn-check" name="tipe_pesanan" id="tipe_custom" value="Custom Order" autocomplete="off" onchange="toggleModePOS()">
+                            <label class="btn btn-outline-primary" for="tipe_custom">Custom Order</label>
+                        </div>
+                        <div class="input-group" style="width: 250px;">
+                            <span class="input-group-text bg-light border-0"><i class="bi bi-search"></i></span>
+                            <input type="text" id="searchPos" class="form-control bg-light border-0" placeholder="Cari produk..." onkeyup="filterProdukPOS()">
+                        </div>
+                    </div>
+                    <div class="card-body p-4 bg-light" style="overflow-y: auto; max-height: calc(100vh - 240px);" id="katalogProdukContainer">
+                        <!-- Mode Ready Stock: Grid Produk -->
+                        <div class="row g-3" id="gridProdukPOS">
+                            <!-- Produk dimuat via JS -->
+                        </div>
+
+                        <!-- Mode Custom Order: Form Manual -->
+                        <div id="formCustomPOS" class="d-none">
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i> Mode <b>Custom Order</b>. Produk ini harus melalui tahap produksi (Work Order) karena barang belum jadi. Gunakan mode ini untuk menerima Uang Muka (DP) terlebih dahulu.
+                            </div>
+                            <div class="card border border-primary shadow-sm mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">Item Custom Order</h5>
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label text-muted small">Nama Pesanan Custom</label>
+                                            <input type="text" class="form-control" id="customNama" placeholder="Contoh: Kemeja Seragam Guru">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-muted small">Harga Satuan (Rp)</label>
+                                            <input type="number" class="form-control" id="customHarga" placeholder="0">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label text-muted small">Kuantitas</label>
+                                            <input type="number" class="form-control" id="customQty" value="1" min="1">
+                                        </div>
+                                        <div class="col-12 text-end">
+                                            <button type="button" class="btn btn-primary" onclick="addCustomToCart()">
+                                                <i class="bi bi-cart-plus"></i> Tambah ke Keranjang
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanan: Keranjang (Cart) -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column">
+                    <div class="card-header bg-white border-bottom-0 pt-4 pb-2 px-4">
+                        <h5 class="fw-bold mb-0">Rincian Transaksi</h5>
+                    </div>
+                    <div class="card-body px-4 py-2 flex-grow-1" style="overflow-y: auto; max-height: calc(100vh - 480px);" id="cartItemsContainer">
+                        <div class="text-center text-muted py-5" id="emptyCart">
+                            <i class="bi bi-cart-x fs-1 text-light"></i>
+                            <p class="mt-2">Keranjang kosong</p>
+                        </div>
+                        <ul class="list-group list-group-flush" id="cartList">
+                            <!-- Items dimuat via JS -->
+                        </ul>
+                    </div>
+                    
+                    <div class="card-footer bg-white border-top px-4 py-3">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small mb-1">Pelanggan</label>
+                            <div class="input-group input-group-sm">
+                                <select class="form-select" id="posPelanggan">
+                                    <option value="">Pelanggan Umum (Guest)</option>
+                                    <!-- Dimuat via JS (fetchPelangganPOS) -->
+                                </select>
+                                <button class="btn btn-outline-primary" type="button" onclick="bukaModalPelangganBaru()" title="Tambah Pelanggan Baru">
+                                    <i class="bi bi-person-plus-fill"></i> Baru
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal</span>
+                            <span class="fw-semibold" id="posSubtotal">Rp 0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 align-items-center">
+                            <span class="text-muted">Diskon (Rp)</span>
+                            <input type="number" class="form-control form-control-sm text-end w-50" id="posDiskon" value="0" oninput="calculatePOS()">
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between mb-3 align-items-center">
+                            <span class="fs-5 fw-bold">Total</span>
+                            <span class="fs-4 fw-bold text-primary" id="posTotal">Rp 0</span>
+                        </div>
+                        
+                        <!-- Input DP (Khusus Custom / Termin) -->
+                        <div id="posTerminContainer" class="d-none bg-light p-2 rounded mb-3 border">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="text-muted small fw-bold">Uang Muka (DP)</span>
+                                <input type="number" class="form-control form-control-sm text-end w-50 border-primary" id="posDP" value="0" oninput="calculatePOS()">
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-danger small">Sisa Tagihan</span>
+                                <span class="fw-bold text-danger small" id="posSisa">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary w-100 py-2 fw-bold" id="btnProsesBayar" onclick="prosesPembayaran()">
+                                    <i class="bi bi-check-circle me-1"></i> Selesaikan Transaksi
+                                </button>
+                            </div>
+                            <div class="col-12 text-center mt-2 d-none" id="btnShortcutWOContainer">
+                                <button type="button" class="btn btn-outline-warning w-100 py-1 fw-bold border-2" onclick="openWOFromPOS()">
+                                    <i class="bi bi-tools me-1"></i> Buat Work Order (Produksi)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB RIWAYAT PENJUALAN -->
+    <div class="tab-pane fade" id="riwayat-penjualan-panel" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="card-title fw-bold mb-0">Riwayat Transaksi Terakhir</h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="fetchRiwayatPenjualan()">
+                        <i class="bi bi-arrow-clockwise"></i> Segarkan
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="tableRiwayatPenjualan">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>No. Invoice</th>
+                                <th>Pelanggan</th>
+                                <th>Tipe</th>
+                                <th>Total Akhir</th>
+                                <th>Status</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dimuat via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Pelanggan Baru POS -->
+<div class="modal fade" id="modalPelangganPOS" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold">Tambah Pelanggan Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <form id="formPelangganPOS">
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">Nama Lengkap</label>
+                        <input type="text" class="form-control" id="pos_pel_nama" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">Instansi / Perusahaan (Opsional)</label>
+                        <input type="text" class="form-control" id="pos_pel_instansi">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">Nomor WhatsApp</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-whatsapp"></i></span>
+                            <input type="text" class="form-control" id="pos_pel_wa" placeholder="628..." value="62" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-semibold mb-1">Alamat</label>
+                        <textarea class="form-control" id="pos_pel_alamat" rows="2" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary px-4" onclick="simpanPelangganPOS(event)">Simpan Pelanggan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cetak Struk -->
+<div class="modal fade" id="modalPrint" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 rounded-4 shadow">
+            <div class="modal-header bg-primary text-white rounded-top-4">
+                <h5 class="modal-title"><i class="bi bi-printer me-2"></i>Cetak Struk / Invoice</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="row mb-3">
+                    <div class="col-md-6 offset-md-3 text-center">
+                        <label class="form-label text-muted">Pilih Ukuran Kertas / Printer</label>
+                        <select class="form-select form-select-lg" id="printSizeSelector" onchange="generatePrintPreview()">
+                            <option value="58mm">Printer Thermal Kasir (58mm)</option>
+                            <option value="80mm">Printer Thermal Kasir (80mm)</option>
+                            <option value="A4">Printer Standar (A4)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0 d-flex justify-content-center bg-secondary py-4" style="overflow-y: auto; max-height: 50vh;">
+                        <!-- Container Preview -->
+                        <div id="printPreviewContainer" class="bg-white p-3 shadow-sm text-dark" style="margin: 0 auto;">
+                            <!-- Konten Struk Dimuat via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-success px-4" onclick="executePrint()">
+                    <i class="bi bi-printer-fill me-1"></i> Cetak Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

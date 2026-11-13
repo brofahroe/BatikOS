@@ -1,0 +1,153 @@
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+        <ul class="nav nav-tabs" id="keuanganTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active fw-semibold text-dark" id="labarugi-tab" data-bs-toggle="tab" data-bs-target="#labarugi" type="button" role="tab">Dasbor Laba Rugi</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold text-dark" id="bukukas-tab" data-bs-toggle="tab" data-bs-target="#bukukas" type="button" role="tab">Buku Kas</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link fw-semibold text-dark" id="inputkas-tab" data-bs-toggle="tab" data-bs-target="#inputkas" type="button" role="tab">Input Kas Manual</button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="card-body p-4 bg-light">
+        <div class="tab-content">
+            <!-- TAB: DASBOR LABA RUGI -->
+            <div class="tab-pane fade show active" id="labarugi" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0 fw-bold">Ringkasan Keuangan Anda</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadKeuangan()"><i class="bi bi-arrow-clockwise"></i> Segarkan</button>
+                </div>
+                
+                <div class="row g-4">
+                    <!-- Card Pemasukan -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100 rounded-4">
+                            <div class="card-body p-4 text-center">
+                                <div class="bg-success bg-opacity-10 text-success rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-graph-up-arrow fs-3"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Total Penjualan</h6>
+                                <h3 class="fw-bold text-success mb-0" id="dashPendapatan">Rp 0</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card Pengeluaran -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100 rounded-4">
+                            <div class="card-body p-4 text-center">
+                                <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-graph-down-arrow fs-3"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Total Pengeluaran</h6>
+                                <h3 class="fw-bold text-danger mb-0" id="dashPengeluaran">Rp 0</h3>
+                                <small class="text-muted" id="dashDetailPengeluaran">Bahan Baku: 0 | Operasional: 0</small>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card Laba Bersih -->
+                    <div class="col-md-4">
+                        <div class="card border-0 shadow-sm h-100 rounded-4 bg-primary text-white">
+                            <div class="card-body p-4 text-center">
+                                <div class="bg-white bg-opacity-25 text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-cash-stack fs-3"></i>
+                                </div>
+                                <h6 class="text-white-50 mb-2">Laba Bersih</h6>
+                                <h3 class="fw-bold mb-0" id="dashLabaBersih">Rp 0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: BUKU KAS -->
+            <div class="tab-pane fade" id="bukukas" role="tabpanel">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0 fw-bold">Buku Kas (Arus Kas)</h5>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle" id="tableBukuKas">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Tipe</th>
+                                        <th>Kategori</th>
+                                        <th>Nominal</th>
+                                        <th>Keterangan</th>
+                                        <th>Tercatat Oleh</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="6" class="text-center py-4 text-muted">Memuat data...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: INPUT KAS MANUAL -->
+            <div class="tab-pane fade" id="inputkas" role="tabpanel">
+                <div class="card border-0 shadow-sm rounded-4 max-w-md mx-auto" style="max-width: 600px;">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-4">Input Pemasukan / Pengeluaran Manual</h5>
+                        
+                        <!-- Shortcut Kategori Pengeluaran -->
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-semibold">Pilih Cepat Kategori Pengeluaran:</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="setShortcutKas('KELUAR', 'Biaya Gaji / Upah')"><i class="bi bi-people-fill me-1"></i>Biaya Gaji / Upah</button>
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="setShortcutKas('KELUAR', 'Biaya Listrik & Air')"><i class="bi bi-lightning-charge-fill me-1"></i>Listrik & Air</button>
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="setShortcutKas('KELUAR', 'Biaya Transportasi')"><i class="bi bi-truck me-1"></i>Transportasi</button>
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="setShortcutKas('KELUAR', 'Sewa Tempat')"><i class="bi bi-house-door-fill me-1"></i>Sewa Tempat</button>
+                                <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" onclick="setShortcutKas('KELUAR', 'Konsumsi Harian')"><i class="bi bi-cup-hot-fill me-1"></i>Konsumsi</button>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <form id="formKasManual" onsubmit="simpanKasManual(event)">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tipe Transaksi</label>
+                                    <select class="form-select" id="kas_tipe" required onchange="updateKategoriOptions()">
+                                        <option value="KELUAR">Pengeluaran</option>
+                                        <option value="MASUK">Pemasukan</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Tanggal</label>
+                                    <input type="date" class="form-control" id="kas_tanggal" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Kategori</label>
+                                    <select class="form-select" id="kas_kategori" required>
+                                        <!-- Dimuat via JS -->
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Nominal (Rp)</label>
+                                    <input type="number" class="form-control fw-bold text-primary" id="kas_nominal" min="1" required placeholder="0">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Keterangan / Catatan</label>
+                                    <textarea class="form-control" id="kas_keterangan" rows="2" placeholder="Catatan opsional tentang transaksi ini..." required></textarea>
+                                </div>
+                                <div class="col-12 mt-4 text-end">
+                                    <button type="button" class="btn btn-light me-2" onclick="document.getElementById('formKasManual').reset()">Reset</button>
+                                    <button type="submit" class="btn btn-primary px-4 fw-bold">Simpan Transaksi</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>

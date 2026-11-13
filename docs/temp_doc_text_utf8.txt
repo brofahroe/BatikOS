@@ -1,0 +1,217 @@
+﻿Product Requirements Document (PRD)
+Nama Produk
+Batik Visualizer
+Versi
+MVP 1.0
+Dokumen Owner
+Founder
+Tanggal
+Juni 2026
+1. Product Vision
+Membantu pengrajin dan penjual batik custom memvisualisasikan desain batik pada berbagai model pakaian secara instan sehingga pelanggan dapat melihat hasil akhir sebelum produksi.
+2. Problem Statement
+Saat ini proses pemesanan batik custom memiliki beberapa kendala:
+Pelanggan sulit membayangkan hasil akhir.
+Banyak revisi desain sebelum produksi.
+Pengrajin harus membuat mockup manual menggunakan Photoshop/Corel.
+Proses approval memakan waktu lama.
+Risiko komplain setelah barang diproduksi cukup tinggi.
+Akibatnya:
+Closing rate rendah.
+Lead time panjang.
+Biaya desain meningkat.
+3. Target Users
+Primary User
+Pengrajin Batik
+Kebutuhan:
+Menampilkan pilihan motif kepada pelanggan.
+Membuat mockup cepat.
+Mengurangi revisi.
+Supplier Seragam Batik
+Kebutuhan:
+Menawarkan banyak pilihan motif.
+Menampilkan preview kepada klien perusahaan.
+Konveksi Batik Custom
+Kebutuhan:
+Mempercepat approval desain.
+Secondary User
+Corporate Buyer
+Kebutuhan:
+Melihat visual seragam sebelum produksi massal.
+Sekolah
+Kebutuhan:
+Menentukan desain seragam batik sekolah.
+Komunitas
+Kebutuhan:
+Memastikan motif dan warna sesuai ekspektasi.
+4. Success Metrics
+Business Metrics
+20 pelanggan aktif dalam 3 bulan.
+100 desain dibuat per bulan.
+30% pengurangan waktu desain.
+20% peningkatan conversion order.
+Product Metrics
+80% desain selesai dalam <5 menit.
+70% pengguna kembali menggunakan aplikasi.
+NPS > 40.
+5. User Journey
+Alur Pengrajin
+Login.
+Upload motif batik.
+Pilih model pakaian.
+Pilih warna kain dasar.
+Terapkan motif.
+Atur skala dan posisi motif.
+Generate preview.
+Simpan.
+Bagikan ke pelanggan.
+Alur Pelanggan
+Membuka link desain.
+Melihat mockup.
+Memberikan persetujuan.
+Melakukan revisi jika diperlukan.
+6. MVP Scope
+Fitur 1 â€” Library Motif
+Deskripsi: Penyimpanan motif batik.
+Fitur:
+Upload JPG/PNG.
+Kategori motif.
+Pencarian motif.
+Preview motif.
+Priority: P0
+Fitur 2 â€” Mockup Garment
+Deskripsi: Pilihan model pakaian.
+Model Awal:
+Kemeja lengan pendek pria.
+Kemeja lengan panjang pria.
+Blouse wanita.
+Tunik wanita.
+Priority: P0
+Fitur 3 â€” Pattern Mapping
+Deskripsi: Menempelkan motif ke area pakaian.
+Fungsi:
+Repeat pattern.
+Scale pattern.
+Rotate pattern.
+Priority: P0
+Fitur 4 â€” Color Customization
+Deskripsi: Mengubah warna motif dan kain.
+Fungsi:
+Color picker.
+Preset warna.
+Custom HEX color.
+Priority: P0
+Fitur 5 â€” Generate Preview
+Deskripsi: Menghasilkan mockup final.
+Output:
+JPG
+PNG
+Priority: P0
+Fitur 6 â€” Share Design
+Deskripsi: Membagikan desain ke pelanggan.
+Output:
+Public URL
+QR Code
+Priority: P1
+Fitur 7 â€” Approval Workflow
+Deskripsi: Pelanggan memberikan persetujuan.
+Status:
+Draft
+Review
+Approved
+Rejected
+Priority: P1
+7. Future Features (V2)
+AI Motif Generator
+Pengguna mendeskripsikan motif.
+Contoh: â€œBatik modern warna biru tema laut.â€
+AI menghasilkan motif.
+AI Recolor
+AI mengubah warna motif otomatis.
+3D Garment Preview
+Preview pakaian dalam tampilan 3D.
+Virtual Model
+Preview pada model pria atau wanita.
+Production Sheet
+Generate file produksi otomatis.
+Quotation Generator
+Generate penawaran harga otomatis.
+8. Functional Requirements
+FR-01 Upload Motif
+User dapat mengunggah file:
+JPG
+PNG
+Maksimal:
+20 MB
+FR-02 Manage Motif
+User dapat:
+Tambah
+Edit
+Hapus
+Arsipkan
+Motif
+FR-03 Select Garment
+User dapat memilih model pakaian.
+FR-04 Apply Pattern
+User dapat:
+Scale
+Rotate
+Reposition
+Motif
+FR-05 Color Editing
+User dapat mengubah:
+Warna dasar kain
+Warna motif
+FR-06 Export
+User dapat mengunduh:
+PNG
+JPG
+FR-07 Approval
+Pelanggan dapat:
+Approve
+Request Revision
+9. Non Functional Requirements
+Performance
+Preview muncul <3 detik.
+Availability
+99% uptime.
+Security
+HTTPS
+Authentication
+Role based access
+Scalability
+Mendukung:
+10.000 desain
+1.000 pengguna aktif
+10. Roles & Permissions
+Admin
+Akses penuh.
+Pengrajin
+Upload motif
+Membuat desain
+Mengirim approval
+Pelanggan
+Melihat desain
+Memberikan approval
+11. Monetization
+Paket Gratis
+20 desain per bulan.
+Watermark.
+Paket Basic
+Rp99.000/bulan
+Unlimited desain.
+Export HD.
+Paket Pro
+Rp299.000/bulan
+Approval workflow.
+Multi user.
+Branding sendiri.
+12. MVP Validation Hypothesis
+Hipotesis Utama:
+â€œJika pengrajin dapat membuat visualisasi batik dalam kurang dari 5 menit, maka jumlah revisi desain akan turun minimal 30% dan conversion order akan naik minimal 15%.â€
+Jika hipotesis ini gagal dibuktikan setelah 3 bulan pilot project, maka produk harus dipivot dari visualizer menjadi platform pemesanan batik custom end-to-end.
+13. Killer KPI
+North Star Metric:
+Jumlah Desain yang Berhasil Disetujui Sebelum Produksi
+Target MVP:
+100 Approval Desain dalam 90 Hari.

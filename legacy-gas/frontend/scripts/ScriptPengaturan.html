@@ -1,0 +1,59 @@
+<script>
+// Load settings from database
+async function loadPengaturan() {
+    try {
+        const res = await requestAPI('read', { sheet: 'Pengaturan' });
+        if(res.success && res.data) {
+            // Mapping
+            const settingsMap = {};
+            res.data.forEach(item => {
+                settingsMap[item.Kunci] = item.Nilai;
+            });
+            
+            // Set to form
+            if(document.getElementById('set_nama_toko')) {
+                document.getElementById('set_nama_toko').value = settingsMap['NamaToko'] || 'Toko Batik Anda';
+                document.getElementById('set_alamat_toko').value = settingsMap['AlamatToko'] || 'Jl. Raya Batik No. 1, Kota';
+                document.getElementById('set_kontak_toko').value = settingsMap['KontakToko'] || '081234567890';
+                document.getElementById('set_pesan_footer').value = settingsMap['PesanFooterStruk'] || 'Terima kasih atas kunjungan Anda.';
+            }
+            
+            // Save to local storage for quick access in POS
+            localStorage.setItem('batikseng_settings', JSON.stringify(settingsMap));
+        }
+    } catch(err) {
+        console.error(err);
+    }
+}
+
+// Save settings to database
+async function simpanPengaturan() {
+    const btn = document.getElementById('btnSimpanPengaturan');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Menyimpan...';
+    btn.disabled = true;
+    
+    const arr = [
+        { Kunci: 'NamaToko', Nilai: document.getElementById('set_nama_toko').value },
+        { Kunci: 'AlamatToko', Nilai: document.getElementById('set_alamat_toko').value },
+        { Kunci: 'KontakToko', Nilai: document.getElementById('set_kontak_toko').value },
+        { Kunci: 'PesanFooterStruk', Nilai: document.getElementById('set_pesan_footer').value }
+    ];
+    
+    try {
+        const res = await requestAPI('saveSettings', { settings: arr });
+        if(res.success) {
+            alert("Pengaturan berhasil disimpan!");
+            // Refresh local storage
+            await loadPengaturan();
+        } else {
+            alert(res.message);
+        }
+    } catch(err) {
+        console.error(err);
+        alert("Error: " + err.message);
+    }
+    
+    btn.innerHTML = '<i class="bi bi-save me-1"></i> Simpan Pengaturan';
+    btn.disabled = false;
+}
+</script>

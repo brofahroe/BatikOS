@@ -1,0 +1,127 @@
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-palette"></i> Workspace Visualizer</h5>
+                    <span class="badge bg-primary">Batik Seng</span>
+                </div>
+                <div class="card-body text-center bg-light" style="min-height: 600px; position: relative;">
+                    <!-- Canvas -->
+                    <canvas id="visualizerCanvas" width="500" height="600" style="background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></canvas>
+                    
+                    <div id="visLoading" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-white bg-opacity-75" style="display: none !important; border-radius: 8px; z-index: 10;">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                        <p class="mt-3 fw-bold text-primary" id="visLoadingText">Memproses gambar...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0">Daftar Desain Tersimpan</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="tableDesainVisualizer">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nama Desain</th>
+                                    <th>Model</th>
+                                    <th>Status Approval</th>
+                                    <th>Link Pelanggan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="4" class="text-center text-muted py-3">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Pilihan Model Pakaian -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">1. Model Pakaian</h6>
+                    <select id="selGarment" class="form-select mb-2">
+                        <option value="kemeja_pendek">Kemeja Pria Lengan Pendek</option>
+                        <option value="kemeja_panjang">Kemeja Pria Lengan Panjang</option>
+                        <option value="blouse">Blouse Wanita</option>
+                        <option value="tunik">Tunik Wanita</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Motif Library -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">2. Motif & Pola</h6>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted mb-1">Upload Motif Baru</label>
+                        <div class="input-group input-group-sm">
+                            <input type="file" id="uploadMotifInput" class="form-control" accept="image/png, image/jpeg">
+                        </div>
+                    </div>
+                    <label class="form-label small text-muted mb-1">Motif Library</label>
+                    <div id="motifLibraryContainer" class="d-flex flex-wrap gap-2 p-2 bg-light border rounded" style="max-height: 150px; overflow-y: auto;">
+                        <div class="text-muted small w-100 text-center py-2" id="motifLibEmpty">Belum ada motif. Silakan upload.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kustomisasi -->
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">3. Kustomisasi Parameter</h6>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <label class="form-label small mb-0 me-3" style="width: 120px;">Warna Dasar</label>
+                        <input type="color" id="colorBase" class="form-control form-control-color" value="#ffffff" style="width: 60px;">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small mb-1 d-flex justify-content-between">
+                            <span>Skala Motif</span>
+                            <span id="lblScale" class="text-primary fw-bold">1.0x</span>
+                        </label>
+                        <input type="range" class="form-range" id="rangeScale" min="0.1" max="3" step="0.1" value="1">
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label small mb-1 d-flex justify-content-between">
+                            <span>Rotasi Motif</span>
+                            <span id="lblRotate" class="text-primary fw-bold">0°</span>
+                        </label>
+                        <input type="range" class="form-range" id="rangeRotate" min="0" max="360" step="1" value="0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save & Share -->
+            <div class="card shadow-sm border-0 bg-primary bg-opacity-10 border border-primary">
+                <div class="card-body">
+                    <h6 class="fw-bold text-primary mb-3">4. Simpan & Bagikan</h6>
+                    <div class="mb-3">
+                        <input type="text" id="inputNamaDesain" class="form-control" placeholder="Nama Desain (mis: Seragam SD 01)">
+                    </div>
+                    <button class="btn btn-primary w-100 fw-bold shadow-sm" id="btnSaveMockup">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Simpan Desain & Generate Link
+                    </button>
+                    
+                    <div id="shareLinkContainer" style="display:none;" class="mt-3 p-3 bg-white border border-success rounded">
+                        <p class="small text-success mb-2 fw-bold"><i class="bi bi-check-circle-fill"></i> Desain berhasil disimpan!</p>
+                        <label class="small text-muted mb-1">Kirim link ini ke Pelanggan:</label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control bg-light" id="shareLinkUrl" readonly>
+                            <button class="btn btn-success" onclick="copyShareLink()" id="btnCopyLink"><i class="bi bi-clipboard"></i> Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

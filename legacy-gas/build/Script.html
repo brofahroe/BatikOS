@@ -1,0 +1,28 @@
+<script>
+    const API_URL = "<?= getScriptUrl() ?>"; 
+    
+    // --- FUNGSI LOCAL STORAGE AMAN ---
+    function getStorage(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+    function setStorage(key, val) { try { localStorage.setItem(key, val); } catch(e) { } }
+    function clearStorage() { try { localStorage.clear(); } catch(e) { } }
+
+    function requestAPI(action, data = null) {
+        return new Promise((resolve, reject) => {
+            let requestData = data ? { ...data } : {};
+            
+            // Sisipkan token otorisasi ke setiap request (jika sudah login)
+            let token = getStorage('batikseng_token');
+            if (token) requestData.token = token;
+
+            // Memanggil fungsi server handleClientRequest secara langsung
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    resolve(response);
+                })
+                .withFailureHandler(function(error) {
+                    reject(error);
+                })
+                .handleClientRequest(action, requestData);
+        });
+    }
+</script>
